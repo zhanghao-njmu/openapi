@@ -137,3 +137,14 @@ mask_image <- function(image, height_range = NULL, width_range = NULL, R_range =
   }
   return(grob)
 }
+
+truncate_text <- function(text, max_length = 50) {
+  truncated_text <- sapply(text, function(x) {
+    if (nchar(x) > max_length) {
+      paste0(substr(x, 1, max_length - 3), "...(", nchar(x) - max_length, " characters omitted)")
+    } else {
+      x
+    }
+  })
+  return(truncated_text)
+}

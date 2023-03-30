@@ -12,6 +12,9 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
   api_url <- api_url %||% getOption("openapi_api_url")
   api_key <- api_key %||% getOption("openapi_api_key")
   organization <- organization %||% getOption("openapi_organization")
+  if (is.null(api_url) || is.null(api_key)) {
+    stop("api_url or api_key is not defined, please run the api_setup function to configure them.")
+  }
   url <- paste(api_url, endpoint, sep = "/")
 
   headers <- add_headers("Content-Type" = post_type)
@@ -38,8 +41,8 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
       } else {
         for (content in split_content) {
           if (!grepl("data:", content, fixed = TRUE)) {
-            stream_content <<- content_json
-            cat(content, sep = "")
+            NULL
+            # cat(content, sep = "")
           }
           if (!grepl("data: [DONE]", content, fixed = TRUE)) {
             content_json <- tryCatch(fromJSON(sub("([^\\{\\}]*)(\\{.*\\})([^\\{\\}]*)", "\\2", content), simplifyVector = FALSE), error = identity)
@@ -50,7 +53,9 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
                 cat(x_content, sep = "")
               } else {
                 if ("role" %in% names(content_json[["choices"]][[1]][["delta"]])) {
-                  cat("role:", content_json[["choices"]][[1]][["delta"]][["role"]], "\n")
+                  NULL
+                  # x_content <- content_json[["choices"]][[1]][["delta"]][["role"]]
+                  # cat("role:", x_content, "\n")
                 } else {
                   x_content <- content_json[["choices"]][[1]][["delta"]][["content"]]
                   stream_content <<- c(stream_content, x_content)
@@ -77,7 +82,40 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
       stop("Error occurred while executing CURL request.")
       return(result)
     } else {
-      return(paste0(stream_content, collapse = ""))
+      headers[["Content-Type"]] <- response_type <- "application/json"
+      if (stream_type == "completion") {
+        content <- charToRaw(toJSON(list(
+          object = "text_completion",
+          model = data$model,
+          choices = list(
+            list(
+              text = paste0(stream_content, collapse = ""),
+              finish_reason = "stop"
+            )
+          )
+        ), auto_unbox = TRUE, digits = 22))
+      } else {
+        content <- charToRaw(toJSON(list(
+          object = "chat.completion",
+          model = data$model,
+          choices = list(
+            list(
+              message = list(content = paste0(stream_content, collapse = "")),
+              finish_reason = "stop"
+            )
+          )
+        ), auto_unbox = TRUE, digits = 22))
+      }
+      req <- httr:::request_build("POST", url, httr:::body_config(data, encode))
+      resp <- httr:::response(
+        url = url, status_code = result,
+        headers = headers, all_headers = NULL, cookies = NULL,
+        content = content, date = Sys.time(), times = NULL,
+        request = req, handle = NULL
+      )
+      status <- check_response(resp, content_type = response_type)
+      attr(resp, "status") <- status
+      return(resp)
     }
   } else {
     args <- c(args, list(timeout(timeout)))
@@ -92,8 +130,8 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
 check_response <- function(resp, content_type = "application/json") {
   if (isTRUE(http_error(resp))) {
     message("Request failed:")
-    message(content(resp)$error$message)
     message_for_status(resp)
+    message(content(resp, as = "text", encoding = "UTF-8"))
     return("notok")
   } else if (!identical(http_type(resp), content_type)) {
     message("The content type of the response is not '", content_type, "'")
