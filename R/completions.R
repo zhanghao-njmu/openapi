@@ -51,5 +51,5 @@ create_completion <- function(endpoint = "v1/completions",
     max_tries = max_tries,
     timeout = timeout
   )
-  return(parse_response(response))
+  return(parse_response(response, CompletionResponse))
 }

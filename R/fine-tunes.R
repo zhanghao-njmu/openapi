@@ -31,7 +31,6 @@ create_fine_tune <- function(endpoint = "v1/fine-tunes",
   data[["classification_betas"]] <- classification_betas
   data[["suffix"]] <- suffix
 
-
   response <- making_requests(
     method = "POST",
     endpoint = endpoint,

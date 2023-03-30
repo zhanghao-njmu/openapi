@@ -13,6 +13,7 @@ Imports:
     httr,
     RCurl,
     jsonlite,
+    R6,
     png,
     rlang,
     magrittr

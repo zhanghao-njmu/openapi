@@ -28,5 +28,5 @@ create_edit <- function(endpoint = "v1/edits",
     max_tries = max_tries,
     timeout = timeout
   )
-  return(parse_response(response))
+  return(parse_response(response, CompletionResponse))
 }

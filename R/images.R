@@ -30,7 +30,7 @@ create_image <- function(endpoint = "v1/images/generations",
     max_tries = max_tries,
     timeout = timeout
   )
-  return(parse_response(response))
+  return(parse_response(response, ImagesResponse))
 }
 
 #' @export
@@ -73,7 +73,7 @@ create_image_edit <- function(endpoint = "v1/images/edits",
     max_tries = max_tries,
     timeout = timeout
   )
-  return(parse_response(response))
+  return(parse_response(response, ImagesResponse))
 }
 
 #' @export
@@ -110,5 +110,5 @@ create_image_variation <- function(endpoint = "v1/images/variations ",
     max_tries = max_tries,
     timeout = timeout
   )
-  return(parse_response(response))
+  return(parse_response(response, ImagesResponse))
 }

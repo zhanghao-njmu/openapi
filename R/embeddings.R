@@ -23,5 +23,5 @@ create_embeddings <- function(endpoint = "v1/embeddings",
     max_tries = max_tries,
     timeout = timeout
   )
-  return(parse_response(response))
+  return(parse_response(response, EmbeddingsResponse))
 }

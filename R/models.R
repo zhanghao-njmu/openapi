@@ -14,7 +14,7 @@ list_models <- function(endpoint = "v1/models",
     max_tries = max_tries,
     timeout = timeout
   )
-  return(parse_response(response))
+  return(parse_response(response, ModelsResponse))
 }
 
 #' @export
@@ -34,5 +34,5 @@ retrieve_model <- function(endpoint = "v1/models",
     max_tries = max_tries,
     timeout = timeout
   )
-  return(parse_response(response))
+  return(parse_response(response, ModelsResponse))
 }

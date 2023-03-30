@@ -33,7 +33,7 @@ create_transcription <- function(endpoint = "v1/audio/transcriptions",
     max_tries = max_tries,
     timeout = timeout
   )
-  return(parse_response(response))
+  return(parse_response(response, AudioResponse))
 }
 
 #' @export
@@ -69,5 +69,5 @@ create_translation <- function(endpoint = "v1/audio/translations",
     max_tries = max_tries,
     timeout = timeout
   )
-  return(parse_response(response))
+  return(parse_response(response, AudioResponse))
 }

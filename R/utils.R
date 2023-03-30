@@ -84,7 +84,8 @@ download <- function(url, destfile, methods = c("auto", "wget", "libcurl", "curl
 #' @export
 fetch_image <- function(url, destfile = NULL, plot = TRUE) {
   parsed_url <- parse_url(url)
-  fileext <- strsplit(parsed_url$path, "\\.")[[1]] %>% .[length(.)]
+  fileext <- strsplit(parsed_url$path, "\\.")[[1]]
+  fileext <- fileext[length(fileext)]
   if (is.null(destfile)) {
     destfile <- tempfile(fileext = paste0(".", fileext))
     on.exit(unlink(destfile))
