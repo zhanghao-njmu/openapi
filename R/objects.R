@@ -158,7 +158,7 @@ ImagesResponse <- R6Class(
     fields = c("created", "url"),
     initialize = function(response) {
       if (inherits(response, "response")) {
-        self$parameters <- fromJSON(rawToChar(response$request$options$postfields), simplifyVector = FALSE)
+        self$parameters <- response$request$fields
         self$fields <- unique(c(names(self$parameters), self$fields))
         self$response <- fromJSON(content(response, as = "text", encoding = "UTF-8"), simplifyVector = FALSE)
         self$response_format <- "json"
@@ -226,7 +226,7 @@ EmbeddingsResponse <- R6Class(
         } else {
           switch(field,
             "object" = self$response$object,
-            "embedding" = unlist(content$data[[1]]$embedding),
+            "embedding" = unlist(self$response$data[[1]]$embedding),
             "model" = self$response$model,
             "prompt_tokens" = self$response$usage$prompt_tokens,
             "total_tokens" = self$response$usage$total_tokens
@@ -265,7 +265,7 @@ AudioResponse <- R6Class(
     fields = c("text"),
     initialize = function(response) {
       if (inherits(response, "response")) {
-        self$parameters <- fromJSON(rawToChar(response$request$options$postfields), simplifyVector = FALSE)
+        self$parameters <- response$request$fields
         self$fields <- unique(c(names(self$parameters), self$fields))
         self$response <- fromJSON(content(response, as = "text", encoding = "UTF-8"), simplifyVector = FALSE)
         self$response_format <- "json"
@@ -305,29 +305,74 @@ ChatGPT <- R6Class(
   classname = "ChatGPT",
   public = list(
     messages = NULL,
-    chat = function(content = NULL, role = "user", stream = TRUE, continue = TRUE, ...) {
+    act_as = NULL,
+    latest_response = NULL,
+    index = NULL,
+    initialize = function(act_as = NULL, messages = NULL) {
+      if (!is.null(act_as)) {
+        matched <- agrep(pattern = act_as, x = prompts[["act"]], max.distance = 0.1, ignore.case = TRUE)
+        message("ChatGPT will act as a(n) ", prompts[["act"]][matched[1]])
+        self$messages <- list(
+          list(
+            "role" = "system",
+            "content" = prompts[["prompt"]][matched[1]]
+          )
+        )
+      } else if (!is.null(messages)) {
+        self$messages <- messages
+      }
+      invisible(self)
+    },
+    chat = function(content = NULL, role = "user", stream = TRUE, continuous = TRUE, ...) {
       if (!is.null(content)) {
         messages <- list(
           list(
             "role" = role,
-            "content" = content
+            "content" = paste0(content, collapse = " ")
           )
         )
-        if (isTRUE(continue)) {
+        if (isTRUE(continuous)) {
           messages <- c(self$messages, messages)
         }
-        content <- create_chat_completion(messages = messages, stream = stream, ...)
+        self$latest_response <- create_chat_completion(messages = messages, stream = stream, ...)
         self$messages <- c(messages, list(
           list(
             "role" = "assistant",
-            "content" = content$extract("choices")[1]
+            "content" = self$latest_response$extract("choices")[1]
           )
         ))
+        self$index <- length(self$messages)
       }
+      invisible(self)
+    },
+    first = function() {
+      self$index <- 1
+      messages <- self$messages[self$index]
+      cat(sprintf("index: %s\n{%s}\n\n", self$index, paste0(messages[[1]][["role"]], ": ", messages[[1]][["content"]])), sep = "")
+      return(invisible(messages[[1]][["content"]]))
+    },
+    last = function() {
+      self$index <- length(self$messages)
+      messages <- self$messages[self$index]
+      cat(sprintf("index: %s\n{%s}\n\n", self$index, paste0(messages[[1]][["role"]], ": ", messages[[1]][["content"]])), sep = "")
+      return(invisible(messages[[1]][["content"]]))
+    },
+    backward = function() {
+      self$index <- max(self$index - 1, 1)
+      messages <- self$messages[self$index]
+      cat(sprintf("index: %s\n{%s}\n\n", self$index, paste0(messages[[1]][["role"]], ": ", messages[[1]][["content"]])), sep = "")
+      return(invisible(messages[[1]][["content"]]))
+    },
+    forward = function() {
+      self$index <- min(self$index + 1, length(self$messages))
+      messages <- self$messages[self$index]
+      cat(sprintf("index: %s\n{%s}\n\n", self$index, paste0(messages[[1]][["role"]], ": ", messages[[1]][["content"]])), sep = "")
+      return(invisible(messages[[1]][["content"]]))
     },
     print = function() {
       conversations <- sapply(self$messages, function(x) paste0(x[["role"]], ": ", x[["content"]]))
-      cat(sprintf("%s\n", conversations), sep = "")
+      cat(sprintf("{%s}\n\n", conversations), sep = "")
+      invisible(self)
     }
   )
 )

@@ -1,10 +1,10 @@
-#' @importFrom httr POST GET DELETE content add_headers
+#' @importFrom httr POST GET DELETE content add_headers timeout
 #' @importFrom RCurl curlPerform
 #' @importFrom jsonlite toJSON fromJSON
 making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/chat/completions",
                             data = NULL, encode = "json",
                             stream = FALSE, stream_type = c("completion", "chat_completion"),
-                            post_type = "application/json", response_type = "application/json", ...,
+                            post_type = "application/json", response_type = "application/json",
                             api_url = NULL, api_key = NULL, organization = NULL,
                             max_tries = 1, timeout = 300) {
   method <- match.arg(method)
@@ -33,6 +33,9 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
   if (isTRUE(stream)) {
     options(RCurlOptions = list(timeout = timeout))
     stream_content <- NULL
+    # if (!is.null(stream_output)) {
+    #   file.create(stream_output)
+    # }
     stream_fun <- function(x) {
       split_content <- strsplit(x, "\n\n")[[1]]
       split_content <- split_content[split_content != ""]
@@ -51,6 +54,9 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
                 x_content <- content_json[["choices"]][[1]][["text"]]
                 stream_content <<- c(stream_content, x_content)
                 cat(x_content, sep = "")
+                # if (!is.null(stream_output)) {
+                #   write(paste0(x_content,collapse = ""),file=stream_output,append=TRUE)
+                # }
               } else {
                 if ("role" %in% names(content_json[["choices"]][[1]][["delta"]])) {
                   NULL
@@ -60,6 +66,9 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
                   x_content <- content_json[["choices"]][[1]][["delta"]][["content"]]
                   stream_content <<- c(stream_content, x_content)
                   cat(x_content, sep = "")
+                  # if (!is.null(stream_output)) {
+                  #   write(paste0(x_content,collapse = ""),file=stream_output,append=TRUE)
+                  # }
                 }
               }
             } else {
@@ -148,11 +157,10 @@ parse_response <- function(resp, class = NULL) {
     return(resp)
   } else {
     if (identical(http_type(resp), "application/json") && !is.null(class)) {
-      resp_content <- class$new(resp)
+      return(class$new(resp))
     } else {
-      resp_content <- content(resp)
+      return(content(resp))
     }
-    return(resp_content)
   }
 }
 

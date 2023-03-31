@@ -148,3 +148,39 @@ truncate_text <- function(text, max_length = 50) {
   })
   return(truncated_text)
 }
+
+#' @export
+fetch_prompts <- function(language = c("en", "zh")) {
+  language <- match.arg(language)
+  url <- switch(language,
+    en = "https://raw.githubusercontent.com/f/awesome-chatgpt-prompts/main/prompts.csv",
+    zh = "https://raw.githubusercontent.com/PlexPt/awesome-chatgpt-prompts-zh/main/prompts-zh.json"
+  )
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  download(url, destfile = tmp)
+  data <- switch(language,
+    en = read.csv(tmp),
+    zh = do.call(rbind.data.frame, fromJSON(readLines(tmp), simplifyVector = FALSE))
+  )
+  data[["act"]] <- trimws(gsub("(Act as)|(充当)|(担任)|(作为)|(扮演)", "", data[["act"]]))
+  return(data)
+}
+
+#' @examples
+#' q <- ChatGPT$new(act_as = "Prompt generater")$chat("Act as an R Package Development Mentor")
+#' prompt1 <- q$last()
+#'
+#' prompt2 <- generate_prompts("Act as an R Package Development Mentor")
+#' @export
+generate_prompts <- function(prompt = "Act as an R Package Development Mentor", ...) {
+  messages <- list(
+    list(
+      "role" = "system",
+      "content" = prompts[prompts[["act"]] == "Prompt Generator", "prompt"]
+    )
+  )
+  q <- ChatGPT$new(messages = messages)
+  q$chat(prompt, ...)
+  return(q$messages[length(q$messages)][[1]]$content)
+}
