@@ -2,6 +2,35 @@
 # Class definitions
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+setClass("TextCompletion",
+  slots = list(
+    response = "ANY",
+    input = "character",
+    output = "character",
+    difference = "ANY"
+  )
+)
+setMethod(
+  "show",
+  signature(object = "TextCompletion"),
+  function(object) {
+    line <- paste0(rep("=", 30), collapse = "")
+    cat(
+      line, " Input text ", line, "\n\n", slot(object, "input"), "\n\n",
+      line, " Output text ", line, "\n\n", slot(object, "output"), "\n\n",
+      sep = ""
+    )
+    invisible(object)
+  }
+)
+setMethod(
+  "print",
+  signature(x = "TextCompletion"),
+  function(x) {
+    show(x)
+  }
+)
+
 # ModelsResponse ----------------------------------------------------------------------------------
 #' @importFrom R6 R6Class
 #' @importFrom jsonlite fromJSON

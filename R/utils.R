@@ -33,7 +33,7 @@ try_get <- function(expr, max_tries = 1, sleep = 1, error_message = "", retry_me
       }
     )
     if (inherits(out, "error") && ntry >= max_tries) {
-      stop(out, call. = FALSE)
+      stop(out)
     } else {
       if (!inherits(out, "error")) {
         break
@@ -186,7 +186,11 @@ generate_prompts <- function(prompt = "Act as an R Package Development Assistant
   messages <- list(
     list(
       "role" = "system",
-      "content" = prompts[prompts[["act"]] == "Prompt Generator", "prompt"]
+      "content" = paste0(prompts[prompts[["act"]] == "ChatGPT prompt generator", "prompt"], "(Give me prompt only)")
+    ),
+    list(
+      "role" = "user",
+      "content" = prompt
     )
   )
   response <- create_chat_completion(messages = messages, ...)
