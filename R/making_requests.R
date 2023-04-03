@@ -3,10 +3,10 @@
 #' @importFrom jsonlite toJSON fromJSON
 making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/chat/completions",
                             data = NULL, encode = "json",
-                            stream = FALSE, stream_type = c("completion", "chat_completion"),
+                            stream = FALSE, stream_type = c("completion", "chat_completion"), stream_file = NULL,
                             post_type = "application/json", response_type = "application/json",
                             api_url = NULL, api_key = NULL, organization = NULL,
-                            max_tries = 1, timeout = 300) {
+                            max_tries = 1, timeout = 300, debug = FALSE) {
   method <- match.arg(method)
   stream_type <- match.arg(stream_type)
   api_url <- api_url %||% getOption("openapi_api_url")
@@ -33,51 +33,62 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
   if (isTRUE(stream)) {
     options(RCurlOptions = list(timeout = timeout))
     stream_content <- NULL
-    # if (!is.null(stream_output)) {
-    #   file.create(stream_output)
-    # }
+    stream_residual <- NULL
+    if (!is.null(stream_file)) {
+      file.create(stream_file)
+    }
     stream_fun <- function(x) {
-      split_content <- strsplit(x, "\n\n")[[1]]
+      split_content <- strsplit(ifelse(grepl("^data:", x), x, paste0(stream_residual, x)), "\n\n")[[1]]
       split_content <- split_content[split_content != ""]
       if (is.null(split_content)) {
-        cat(x, sep = "")
+        NULL
       } else {
         for (content in split_content) {
-          if (!grepl("data:", content, fixed = TRUE)) {
-            NULL
-            # cat(content, sep = "")
-          }
           if (!grepl("data: [DONE]", content, fixed = TRUE)) {
             content_json <- tryCatch(fromJSON(sub("([^\\{\\}]*)(\\{.*\\})([^\\{\\}]*)", "\\2", content), simplifyVector = FALSE), error = identity)
             if (!inherits(content_json, "error")) {
               if (stream_type == "completion") {
                 x_content <- content_json[["choices"]][[1]][["text"]]
                 stream_content <<- c(stream_content, x_content)
-                cat(x_content, sep = "")
-                # if (!is.null(stream_output)) {
-                #   write(paste0(x_content,collapse = ""),file=stream_output,append=TRUE)
-                # }
-              } else {
+                if (!is.null(stream_file)) {
+                  cat(paste0(x_content, collapse = ""), file = stream_file, append = TRUE, sep = "")
+                } else {
+                  cat(x_content, sep = "")
+                }
+              } else if (stream_type == "chat_completion") {
                 if ("role" %in% names(content_json[["choices"]][[1]][["delta"]])) {
-                  NULL
-                  # x_content <- content_json[["choices"]][[1]][["delta"]][["role"]]
-                  # cat("role:", x_content, "\n")
+                  if (debug) {
+                    x_content <- content_json[["choices"]][[1]][["delta"]][["role"]]
+                    cat("role:", x_content, "\n")
+                  } else {
+                    NULL
+                  }
                 } else {
                   x_content <- content_json[["choices"]][[1]][["delta"]][["content"]]
                   stream_content <<- c(stream_content, x_content)
-                  cat(x_content, sep = "")
-                  # if (!is.null(stream_output)) {
-                  #   write(paste0(x_content,collapse = ""),file=stream_output,append=TRUE)
-                  # }
+                  if (!is.null(stream_file)) {
+                    cat(paste0(x_content, collapse = ""), file = stream_file, append = TRUE, sep = "")
+                  } else {
+                    cat(x_content, sep = "")
+                  }
                 }
               }
             } else {
-              # e_x <<- content
-              # e <<- content_json
-              cat("*", sep = "")
+              stream_residual <<- content
+              if (debug) {
+                e_x <<- content
+                e <<- content_json
+                cat(content, "\n", sep = "")
+              } else {
+                NULL
+              }
             }
           } else {
-            cat("\n")
+            if (!is.null(stream_file)) {
+              cat("\ndata: [DONE]\n", file = stream_file, append = TRUE, sep = "")
+            } else {
+              cat("\n")
+            }
           }
         }
       }
@@ -91,48 +102,53 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
       stop("Error occurred while executing CURL request.")
       return(result)
     } else {
-      headers[["Content-Type"]] <- response_type <- "application/json"
+      args2 <- c(args, list(timeout(timeout)))
       if (stream_type == "completion") {
-        content <- charToRaw(toJSON(list(
-          object = "text_completion",
-          model = data$model,
-          choices = list(
-            list(
-              text = paste0(stream_content, collapse = ""),
-              finish_reason = "stop"
-            )
-          )
-        ), auto_unbox = TRUE, digits = 22))
-      } else {
-        content <- charToRaw(toJSON(list(
-          object = "chat.completion",
-          model = data$model,
-          choices = list(
-            list(
-              message = list(content = paste0(stream_content, collapse = "")),
-              finish_reason = "stop"
-            )
-          )
-        ), auto_unbox = TRUE, digits = 22))
+        args2[["body"]][["prompt"]] <- "say \"test\""
+      } else if (stream_type == "chat_completion") {
+        args2[["body"]][["messages"]] <- list(list(role = "user", content = "say \"test\""))
       }
-      req <- httr:::request_build("POST", url, httr:::body_config(data, encode))
-      resp <- httr:::response(
-        url = url, status_code = result,
-        headers = headers, all_headers = NULL, cookies = NULL,
-        content = content, date = Sys.time(), times = NULL,
-        request = req, handle = NULL
-      )
-      status <- check_response(resp, content_type = response_type)
-      attr(resp, "status") <- status
-      return(resp)
+      args2[["body"]][["stream"]] <- FALSE
+      resp <- try_get(do.call(method, args2), max_tries = max_tries)
+
+      resp$request$options$postfields <- charToRaw(paste(jsonlite::toJSON(args[["body"]], auto_unbox = TRUE, digits = 22), collapse = "\n"))
+      resp$request$options$postfieldsize <- length(resp$request$options$postfields)
+
+      if (!is.null(stream_content)) {
+        if (stream_type == "completion") {
+          content <- charToRaw(toJSON(list(
+            object = "text_completion",
+            model = data$model,
+            choices = list(
+              list(
+                text = paste0(stream_content, collapse = ""),
+                finish_reason = "stop"
+              )
+            )
+          ), auto_unbox = TRUE, digits = 22))
+        } else if (stream_type == "chat_completion") {
+          content <- charToRaw(toJSON(list(
+            object = "chat.completion",
+            model = data$model,
+            choices = list(
+              list(
+                message = list(content = paste0(stream_content, collapse = "")),
+                finish_reason = "stop"
+              )
+            )
+          ), auto_unbox = TRUE, digits = 22))
+        }
+        resp$content <- content
+      }
     }
   } else {
     args <- c(args, list(timeout(timeout)))
     resp <- try_get(do.call(method, args), max_tries = max_tries)
-    status <- check_response(resp, content_type = response_type)
-    attr(resp, "status") <- status
-    return(resp)
   }
+
+  status <- check_response(resp, content_type = response_type)
+  attr(resp, "status") <- status
+  return(resp)
 }
 
 #' @importFrom httr http_error http_type content message_for_status

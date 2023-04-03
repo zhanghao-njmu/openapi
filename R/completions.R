@@ -20,7 +20,8 @@ create_completion <- function(endpoint = "v1/completions",
                               api_key = NULL,
                               organization = NULL,
                               max_tries = 1,
-                              timeout = 300) {
+                              timeout = 300,
+                              ...) {
   data <- list()
   data[["model"]] <- model
   data[["prompt"]] <- prompt
@@ -49,7 +50,8 @@ create_completion <- function(endpoint = "v1/completions",
     api_key = api_key,
     organization = organization,
     max_tries = max_tries,
-    timeout = timeout
+    timeout = timeout,
+    ...
   )
   return(parse_response(response, CompletionResponse))
 }

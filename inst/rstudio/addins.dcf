@@ -1,0 +1,4 @@
+Name: ChatGPT addin
+Description: A RStudio addin for interacting with ChatGPT.
+Binding: ChatGPT_addin
+Interactive: false

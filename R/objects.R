@@ -311,37 +311,53 @@ ChatGPT <- R6Class(
     initialize = function(act_as = NULL, messages = NULL) {
       if (!is.null(act_as)) {
         matched <- agrep(pattern = act_as, x = prompts[["act"]], max.distance = 0.1, ignore.case = TRUE)
-        message("ChatGPT will act as a(n) ", prompts[["act"]][matched[1]])
-        self$messages <- list(
-          list(
-            "role" = "system",
-            "content" = prompts[["prompt"]][matched[1]]
+        if (length(matched) > 0) {
+          message("ChatGPT will act as a ", prompts[["act"]][matched[1]])
+          self$messages <- list(
+            list(
+              "role" = "system",
+              "content" = prompts[["prompt"]][matched[1]]
+            )
           )
-        )
+        } else {
+          message("Couldn't find a built-in prompt for the role. Generating one instead...")
+          prompt <- generate_prompts(paste0("Act as a ", act_as))
+          self$messages <- list(
+            list(
+              "role" = "system",
+              "content" = prompt
+            )
+          )
+        }
       } else if (!is.null(messages)) {
         self$messages <- messages
       }
       invisible(self)
     },
-    chat = function(content = NULL, role = "user", stream = TRUE, continuous = TRUE, ...) {
-      if (!is.null(content)) {
+    chat = function(prompt = NULL, role = "user", stream = TRUE, continuous = TRUE, ...) {
+      if (!is.null(prompt)) {
         messages <- list(
           list(
             "role" = role,
-            "content" = paste0(content, collapse = " ")
+            "content" = paste0(prompt, collapse = " ")
           )
         )
         if (isTRUE(continuous)) {
           messages <- c(self$messages, messages)
         }
-        self$latest_response <- create_chat_completion(messages = messages, stream = stream, ...)
-        self$messages <- c(messages, list(
-          list(
-            "role" = "assistant",
-            "content" = self$latest_response$extract("choices")[1]
-          )
-        ))
-        self$index <- length(self$messages)
+        resp <- create_chat_completion(messages = messages, stream = stream, ...)
+        if (inherits(resp, "CompletionResponse")) {
+          self$latest_response <- resp
+          self$messages <- c(messages, list(
+            list(
+              "role" = "assistant",
+              "content" = self$latest_response$extract("choices")[1]
+            )
+          ))
+          self$index <- length(self$messages)
+        } else {
+          warning("An error occurred when generating the chat completion. Please check the parameters and try again later.", immediate. = TRUE)
+        }
       }
       invisible(self)
     },
@@ -371,6 +387,7 @@ ChatGPT <- R6Class(
     },
     print = function() {
       conversations <- sapply(self$messages, function(x) paste0(x[["role"]], ": ", x[["content"]]))
+      cat("Conversations:\n\n")
       cat(sprintf("{%s}\n\n", conversations), sep = "")
       invisible(self)
     }

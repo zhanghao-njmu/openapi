@@ -16,6 +16,10 @@ Imports:
     R6,
     png,
     rlang,
-    magrittr
+    magrittr,
+    shiny (>= 0.13),
+    miniUI (>= 0.1.1),
+    rstudioapi (>= 0.5),
+    future
 Depends: 
     R (>= 2.10)

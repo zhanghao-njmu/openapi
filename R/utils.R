@@ -1,15 +1,22 @@
 #' @importFrom httr GET
 #' @export
-api_setup <- function(api_url = "https://api.openai.com", api_key, organization = NULL, check_url = TRUE) {
-  if (missing(api_key)) {
-    stop("Please obtain an API key from https://platform.openai.com/ or the mirror sites.")
+api_setup <- function(api_url = "https://api.openai.com", api_key = NULL, organization = NULL, check_url = TRUE) {
+  api_url <- api_url %||% getOption("openapi_api_url")
+  api_key <- api_key %||% getOption("openapi_api_key")
+  openapi_organization <- organization %||% getOption("openapi_organization")
+  if (is.null(api_url)) {
+    stop("Please specify the API URL.")
   }
-  if (isTRUE(check_url)) {
-    try_get(GET(api_url), error_message = paste0("Unable to establish a connection with api_url: ", api_url))
+  if (is.null(api_key)) {
+    stop("Please obtain an API key from https://platform.openai.com/ or the mirror sites.")
   }
   options(openapi_api_url = api_url)
   options(openapi_api_key = api_key)
   options(openapi_organization = organization)
+  if (isTRUE(check_url)) {
+    try_get(GET(api_url), error_message = paste0("Unable to establish a connection with api_url: ", api_url))
+  }
+  return(invisible(NULL))
 }
 
 try_get <- function(expr, max_tries = 1, sleep = 1, error_message = "", retry_message = "Retrying...") {
@@ -20,14 +27,13 @@ try_get <- function(expr, max_tries = 1, sleep = 1, error_message = "", retry_me
     out <- tryCatch(
       expr = eval.parent(substitute(expr)),
       error = function(error) {
-        message(error)
         message(error_message)
         Sys.sleep(sleep)
         return(error)
       }
     )
     if (inherits(out, "error") && ntry >= max_tries) {
-      stop(out)
+      stop(out, call. = FALSE)
     } else {
       if (!inherits(out, "error")) {
         break
@@ -168,19 +174,21 @@ fetch_prompts <- function(language = c("en", "zh")) {
 }
 
 #' @examples
-#' q <- ChatGPT$new(act_as = "Prompt generater")$chat("Act as an R Package Development Mentor")
+#' q <- ChatGPT$new(act_as = "Prompt generater")$chat("Act as an R Package Development Assistant")
 #' prompt1 <- q$last()
+#' q <- ChatGPT$new()$chat(prompt1, role = "system")
 #'
-#' prompt2 <- generate_prompts("Act as an R Package Development Mentor")
+#' prompt2 <- generate_prompts("Act as an R Package Development Assistant")
+#' q <- ChatGPT$new()$chat(prompt2, role = "system")
+#'
 #' @export
-generate_prompts <- function(prompt = "Act as an R Package Development Mentor", ...) {
+generate_prompts <- function(prompt = "Act as an R Package Development Assistant", ...) {
   messages <- list(
     list(
       "role" = "system",
       "content" = prompts[prompts[["act"]] == "Prompt Generator", "prompt"]
     )
   )
-  q <- ChatGPT$new(messages = messages)
-  q$chat(prompt, ...)
-  return(q$messages[length(q$messages)][[1]]$content)
+  response <- create_chat_completion(messages = messages, ...)
+  return(response$extract("choices")[1])
 }
