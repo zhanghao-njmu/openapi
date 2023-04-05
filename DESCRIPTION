@@ -1,11 +1,11 @@
 Package: openapi
 Type: Package
 Title: Interface to the OpenAI API
-Version: 0.1.0
+Version: 0.2.0
 Author: Hao Zhang
 Maintainer: Hao Zhang <haozhang@njmu.edu.cn>
 Description: The openapi R package provides an easy-to-use interface for interacting with the OpenAI API in R, allowing users to generate responses to natural language prompts and process them for various tasks.
-License: GPL (>= 3)
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
@@ -21,7 +21,6 @@ Imports:
     miniUI (>= 0.1.1),
     rstudioapi (>= 0.5),
     future,
-    diffr,
-    htmlwidgets
+    diffr
 Depends: 
     R (>= 2.10)

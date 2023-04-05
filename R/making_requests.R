@@ -1,6 +1,29 @@
+#' Making Requests Function
+#'
+#' This function allows users to make requests to OpenAI's API endpoint using various http methods.
+#'
+#' @param method A character string indicating the http method to be used (default is "POST").
+#' @param endpoint A character string indicating the endpoint to which the request should be sent (default is "v1/chat/completions").
+#' @param data A list object containing the data to be sent with the request (default is NULL).
+#' @param encode A character string specifying the encoding type for the data to be sent (default is "json").
+#' @param stream A logical value indicating whether the response should be streamed or not (default is FALSE).
+#' @param stream_type A character string specifying the type of stream content to expect in the response (default is "completion").
+#' @param stream_file A character string indicating the file path to save the streamed content to (default is NULL).
+#' @param post_type A character string specifying the content type of the request body (default is "application/json").
+#' @param response_type A character string specifying the content type of the response body (default is "application/json").
+#' @param api_url A character string indicating the OpenAI API endpoint URL (default is NULL).
+#' @param api_key A character string indicating the user's API key (default is NULL).
+#' @param organization A character string indicating the name of the OpenAI organization being accessed (default is NULL).
+#' @param max_tries An integer specifying the maximum number of tries allowed for a given request before an error is thrown (default is 1).
+#' @param timeout An integer specifying the timeout window for the request in seconds (default is 300).
+#' @param debug A logical value indicating whether debug mode should be initiated (default is FALSE).
+#'
+#' @return A response object containing the http status code and response content.
+#'
 #' @importFrom httr POST GET DELETE content add_headers timeout
 #' @importFrom RCurl curlPerform
 #' @importFrom jsonlite toJSON fromJSON
+#' @export
 making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/chat/completions",
                             data = NULL, encode = "json",
                             stream = FALSE, stream_type = c("completion", "chat_completion"), stream_file = NULL,
@@ -76,9 +99,9 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
             } else {
               stream_residual <<- content
               if (debug) {
-                e_x <<- content
-                e <<- content_json
                 cat(content, "\n", sep = "")
+                # assign("content", content, envir = .GlobalEnv)
+                # assign("content_json", content_json, envir = .GlobalEnv)
               } else {
                 NULL
               }
@@ -143,6 +166,7 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
     }
   } else {
     args <- c(args, list(timeout(timeout)))
+    # assign("args", args, envir = .GlobalEnv)
     resp <- try_get(do.call(method, args), max_tries = max_tries)
   }
 
@@ -151,7 +175,20 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
   return(resp)
 }
 
+#' Check Response
+#'
+#' Checks if the response was successful and matches the given content type.
+#'
+#' @param resp HTTP response object returned by 'httr' package function.
+#' @param content_type Expected content type of the response.
+#' @return Returns a string with value "ok" if response status code is not an error
+#' code and the content type of the response matches the expected content type.
+#' Otherwise it returns "notok".
+#' @examples
+#' check_response(resp = httr::POST("http://httpbin.org/post", body = list(a = 1, b = "xyz")))
+#' check_response(resp = httr::POST("http://httpbin.org/status/404"), content_type = "application/json")
 #' @importFrom httr http_error http_type content message_for_status
+#' @export
 check_response <- function(resp, content_type = "application/json") {
   if (isTRUE(http_error(resp))) {
     message("Request failed:")
@@ -166,8 +203,25 @@ check_response <- function(resp, content_type = "application/json") {
   }
 }
 
+#' Parse Response
+#'
+#' This function parses a response using the specified class.
+#'
+#' @param resp Response object to parse.
+#' @param class Class to use for parsing.
+#'
+#' @return Object parsed with the specified class if class is specified and response is JSON, otherwise the contents of the response object.
+#'
+#' @examples
+#' \dontrun{
+#' # parse response with specified class
+#' parse_response(resp, MyResponseClass)
+#' # parse response without class
+#' parse_response(resp)
+#' }
 #' @importFrom httr content
 #' @importFrom jsonlite fromJSON
+#' @export
 parse_response <- function(resp, class = NULL) {
   if (identical(attr(resp, "status"), "notok") || !inherits(resp, "response")) {
     return(resp)

@@ -1,44 +1,49 @@
 Name: ChatGPT
 Description: A RStudio addin for interacting with ChatGPT.
+Binding: ChatGPT_gadget
+Interactive: TRUE
+
+Name: ChatGPT (background job)
+Description: A RStudio addin for interacting with ChatGPT.
 Binding: ChatGPT_job
-Interactive: false
+Interactive: FALSE
 
-Name: Quote section
-Description: Quotes a selected section of code in the active RStudio document and sends it to the R console as a character string.
-Binding: quote_section
-Interactive: false
+Name: Quote selection
+Description: Quotes the selection of code in the active RStudio document and sends it to the R console as a character string.
+Binding: quote_selection_to_console
+Interactive: TRUE
 
-Name: Document section
-Description: Document section
+Name: Document selection
+Description: Document selection
 Binding: code_document_addin
-Interactive: false
+Interactive: TRUE
 
-Name: Check section
-Description: Check section
+Name: Check selection
+Description: Check selection
 Binding: code_check_addin
-Interactive: false
+Interactive: TRUE
 
-Name: Improve section
-Description: Improve section
+Name: Improve selection
+Description: Improve selection
 Binding: code_improve_addin
-Interactive: false
+Interactive: TRUE
 
-Name: Comment section
-Description: Comment section
+Name: Comment selection
+Description: Comment selection
 Binding: code_comment_addin
-Interactive: false
+Interactive: TRUE
 
-Name: Refactor section
-Description: Refactor section
+Name: Refactor selection
+Description: Refactor selection
 Binding: code_refactor_addin
-Interactive: false
+Interactive: TRUE
 
-Name: Explain section
-Description: Explain section
+Name: Explain selection
+Description: Explain selection
 Binding: code_explain_addin
-Interactive: false
+Interactive: TRUE
 
-Name: Create test units for section
-Description: Create test units for section
+Name: Create test units for selection
+Description: Create test units for selection
 Binding: code_create_test_addin
-Interactive: false
+Interactive: TRUE

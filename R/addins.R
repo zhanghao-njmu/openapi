@@ -1,3 +1,13 @@
+#' A Shiny Gadget for AI Chatbot based on OpenAI API
+#'
+#' This function generates a Shiny Gadget for an AI Chatbot based on the OpenAI API. The user can interact with the chatbot using prompts/questions and receive intelligent responses.
+#'
+#' @param viewer A viewer pane to use for displaying the gadget (defaults to paneViewer(minHeight = 300)).
+#' @param api_url The URL of the OpenAI API.
+#' @param api_key The API key to access the OpenAI API.
+#' @param organization The ID of the organization used to access the OpenAI API.
+#' @param ... Additional arguments to pass to the ChatGPT class constructor.
+#'
 #' @import shiny
 #' @import miniUI
 #' @importFrom future plan future value multisession
@@ -9,14 +19,14 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
   openai_content <- readLines(openai_path, warn = FALSE)
   user_path <- system.file("icons", "speech-bubble-line-icon.svg", package = "openapi")
   user_content <- readLines(user_path, warn = FALSE)
-  jscode <- '
+  jscode <- "
     $(function() {
-      var $els = $("[data-proxy-click]");
+      var $els = $(\"[data-proxy-click]\");
       $.each(
         $els,
         function(idx, el) {
           var $el = $(el);
-          var $proxy = $("#" + $el.data("proxyClick"));
+          var $proxy = $(\"#\" + $el.data(\"proxyClick\"));
           $el.keydown(function(e) {
             if (e.keyCode === 13 && !e.shiftKey) {
               e.preventDefault();
@@ -29,7 +39,7 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
         }
       );
     });
-    '
+  "
 
   ui <- miniPage(
     id = "addin",
@@ -45,31 +55,32 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
         miniContentPanel(
           fillCol(
             flex = c(1, NA),
-            tags$div(
+            div(
               id = "chat_output_container", style = "height: 100%; max-height: 100%; overflow-y: auto;",
               fillRow(
                 flex = c(NA, NA, 1),
-                tags$div(HTML(paste0(openai_content, collapse = "\n")), style = "width:30px; height:30px"),
+                div(HTML(paste0(openai_content, collapse = "\n")), style = "width:30px; height:30px"),
                 div(style = "width:5px"),
-                tags$div(
+                div(
                   verbatimTextOutput(
                     outputId = "chat_output", placeholder = TRUE
                   ),
                   tags$head(tags$style(
                     paste0("#chat_output{color:white; background: ", colors["lightchat"], "; font-size:12px;
                              white-space: pre-wrap; overflow-wrap: break-word; max-width: 100%; max-height: 100%;}")
-                  ))
+                  )),
+                  div(actionButton("chat_regenerate", label = "Regenerate", icon = icon("repeat"), width = "120px"), style = "display:inline-block; float:right")
                 )
               )
             ),
-            tags$div(
+            div(
               id = "chat_input_container", style = "bottom: 0; height: 100%; max-height: 100%; width: 100%;",
               div(style = "border-top: 1px solid #CDD2D4"),
               div(style = "height:10px"),
               fillRow(
                 flex = c(1, NA),
                 tagAppendAttributes(
-                  tags$div(
+                  div(
                     textAreaInput(
                       inputId = "chat_input",
                       label = NULL,
@@ -85,20 +96,20 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
                     white-space: pre-wrap; overflow-wrap: break-word;}")
                     )),
                     tags$script("
-                      var textarea = document.getElementById('chat_input');
-                      textarea.addEventListener('input', function() {
+                      var textarea = document.getElementById(\"chat_input\");
+                      textarea.addEventListener(\"input\", function() {
                           $(this).height(0);
                           $(this).height(this.scrollHeight);
                       });
                   ")
                   ),
-                  `data-proxy-click` = "chat_submit"
+                  "data-proxy-click" = "chat_submit"
                 ),
                 fillCol(
                   flex = c(NA, NA, NA),
                   actionButton("chat_submit", label = "Send", icon = icon("paper-plane"), width = "105px", style = "text-align: center;"),
                   div(style = "height:3px"),
-                  actionButton("chat_clear", label = "Clear chat", icon = icon("rotate"), width = "105px", style = "text-align: center;")
+                  actionButton("chat_clear", label = "Clear chat", icon = icon("rotate-right"), width = "105px", style = "text-align: center;")
                 )
               )
             )
@@ -156,6 +167,22 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
       NULL
     }) %>% bindEvent(input$chat_submit)
 
+    observe({
+      if (inherits(r$async, "Future")) {
+        r$chat <- value(r$async)
+      }
+      rchat <- r$chat
+      r$async <- future(rchat$regenerate(
+        stream = TRUE,
+        stream_file = conversation,
+        api_url = api_url,
+        api_key = api_key,
+        organization = organization,
+        ...
+      ))
+      NULL
+    }) %>% bindEvent(input$chat_regenerate)
+
     output$chat_output <- renderText({
       invalidateLater(50)
       if (is.null(r$async)) {
@@ -186,9 +213,29 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
   runGadget(ui, server, viewer = viewer)
 }
 
+#' Run ChatGPT job
+#'
+#' The function runs a ChatGPT job by calling the openapi::ChatGPT_gadget function with the specified parameters defined in the arguments. It also creates an R script file and writes the ChatGPT function code into the file. The R script file is then run as a job through the jobRunScript() function, which creates a background process that listens for user inputs and generates responses using OpenAI API.
+#'
+#' @inheritParams ChatGPT_gadget
+#'
 #' @import rstudioapi
 #' @export
-ChatGPT_job <- function(api_url = NULL, api_key = NULL, organization = NULL) {
+#'
+#' @examples
+#' \dontrun{
+#' # Set up OpenAI API endpoint URL and API key
+#' api_url <- "https://api.openai.com"
+#' api_key <- "my-secret-api-key"
+#'
+#' # Start a ChatGPT job
+#' ChatGPT_job(api_url = api_url, api_key = api_key)
+#' }
+#' @seealso
+#' \code{\link{ChatGPT_gadget}} function
+#' @import rstudioapi
+#' @export
+ChatGPT_job <- function(viewer = "rstudioapi::viewer", api_url = NULL, api_key = NULL, organization = NULL) {
   api_url <- api_url %||% getOption("openapi_api_url")
   api_key <- api_key %||% getOption("openapi_api_key")
   organization <- organization %||% getOption("openapi_organization")
@@ -202,7 +249,7 @@ ChatGPT_job <- function(api_url = NULL, api_key = NULL, organization = NULL) {
   file <- file(jobscript)
   writeLines(
     text = paste0(
-      "openapi::ChatGPT_gadget(viewer = rstudioapi::viewer,api_url=\"", api_url, "\",api_key=\"", api_key, "\"",
+      "openapi::ChatGPT_gadget(viewer = ", viewer, ",api_url=\"", api_url, "\",api_key=\"", api_key, "\"",
       if (!is.null(organization)) paste0("\",organization=\"", organization, "\""), ")"
     ),
     con = jobscript
@@ -210,18 +257,20 @@ ChatGPT_job <- function(api_url = NULL, api_key = NULL, organization = NULL) {
   close(file)
   jobid <- jobRunScript(path = jobscript, name = "ChatGPT_addin")
   message("ChatGPT job ID : ", jobid)
-  # message("You can cancel the ChatGPT job by rstudioapi::jobSetState(\"", jobid, "\", state = \"cancelled\")")
   return(invisible(NULL))
 }
 
 #' @import rstudioapi
-quote_section <- function() {
+quote_selection_to_console <- function() {
   doc <- getActiveDocumentContext()
   doc_range <- doc$selection[[1]]$range
   selected_text <- doc$selection[[1]]$text
   if (all(nchar(selected_text) == 0L)) {
     message("No code selected")
     return(invisible(NULL))
+  }
+  if (nchar(selected_text) > 3800) {
+
   }
   quoted_text <- deparse(selected_text)
   sendToConsole(paste0("code <- ", quoted_text), execute = FALSE)
@@ -232,15 +281,16 @@ quote_section <- function() {
 code_xxx_addin <- function(fun) {
   cat("Edit selection using the", fun, "function ...\n")
   doc <- getActiveDocumentContext()
-  doc_range <- doc$selection[[1]]$range
   selected_text <- doc$selection[[1]]$text
   if (all(nchar(selected_text) == 0L)) {
-    message("No code selected")
+    cat("No code selected.\n")
     return(invisible(NULL))
   }
-  fun <- get(fun)
   res <- do.call(fun, args = list(code = selected_text))
-  print(res@difference)
+  if (!is.null(res$extract("difference"))) {
+    print(res$extract("difference"))
+  }
+  cat(fun, "finished.\n")
   return(invisible(NULL))
 }
 

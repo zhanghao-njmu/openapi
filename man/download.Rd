@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{download}
 \alias{download}
-\title{Download File from the Internet}
+\title{Download a file from a URL}
 \usage{
 download(
   url,
@@ -14,23 +14,29 @@ download(
 )
 }
 \arguments{
-\item{url}{a \code{\link{character}} string (or longer vector e.g.,
-    for the \code{"libcurl"} method) naming the URL of a resource to be
-    downloaded.}
+\item{url}{a character string specifying the URL to download the file from}
 
-\item{destfile}{a character string (or vector, see the \code{url}
-    argument) with the file path where the downloaded file is to be
-    saved.  Tilde-expansion is performed.}
+\item{destfile}{a character string specifying the name of the file in which to save the download.}
 
-\item{methods}{Methods to be used for downloading files. The default is to try different download methods in turn until the download is successfully completed.}
+\item{methods}{A character string or vector specifying the methods to be used for the transfer. Default is "auto".}
 
-\item{quiet}{If \code{TRUE}, suppress status messages (if any), and
-    the progress bar.}
+\item{quiet}{a logical indicating whether to run quietly, default TRUE}
 
-\item{...}{Other arguments passed to \code{\link[utils]{download.file}}}
+\item{...}{optional additional arguments passed to download.file.}
 
-\item{max_tries}{Number of tries for each download method.}
+\item{max_tries}{an integer indicating the maximum number of retries to attempt for downloading the file. Default is 1.}
+}
+\value{
+`NULL`. The function invisibly returns NULL.
 }
 \description{
-Download File from the Internet
+Downloads a file from a given URL and saves it to a specified destination file.
+}
+\examples{
+\dontrun{
+# Download MP3 file:
+download("http://www.example.com/audio.mp3", "audio.mp3")
+# Download CSV file:
+download("http://www.example.com/mydata.csv", "mydata.csv")
+}
 }
