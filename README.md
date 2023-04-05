@@ -77,7 +77,7 @@ q$messages
 q$latest_response
 ```
 
-![ChatGPT_console](inst/images/chatgpt_console_2x.gif)
+![ChatGPT_console](README/chatgpt_console_2x.gif)
 
 ## Interact with chatGPT within the RStudio’s viewer pane
 
@@ -89,7 +89,7 @@ ChatGPT_gadget(viewer = shiny::dialogViewer("chatgpt", width = 800, height = 100
 ChatGPT_gadget(viewer = shiny::browserViewer())
 ```
 
-![ChatGPT_console](inst/images/chatgpt_viewer_2x.gif)
+![ChatGPT_console](README/chatgpt_viewer_2x.gif)
 
 ### Start as background job
 
@@ -97,7 +97,7 @@ ChatGPT_gadget(viewer = shiny::browserViewer())
 ChatGPT_job()
 ```
 
-![ChatGPT_console](inst/images/chatgpt_bgjob_2x.gif)
+![ChatGPT_console](README/chatgpt_bgjob_2x.gif)
 
 # R code assistant
 
@@ -120,7 +120,7 @@ edited$extract("output")
 edited$response
 ```
 
-![ChatGPT_console](inst/images/code_check_2x.gif)
+![ChatGPT_console](README/code_check_2x.gif)
 
 # Othe functions
 
