@@ -43,10 +43,10 @@ code_edit <- function(code, prompt, instruction, explain = getOption("openapi_ex
   if (isTRUE(explain)) {
     instruction <- paste0(instruction, " The output should be in standard R code format with the explanation.")
   } else {
-    instruction <- paste0(instruction, " The output should be in standard R code format without any explanation.")
+    instruction <- paste0(instruction, " Do not write explanations.")
   }
   if (isTRUE(simplify)) {
-    instruction <- paste0(instruction, " Please only include relevant R code snippets, and exclude any R code that does not require modification.")
+    instruction <- paste0(instruction, " Do not provide me with any R code that does not require modification.")
   }
   messages <- list(
     list(

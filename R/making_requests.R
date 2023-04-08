@@ -125,44 +125,37 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
       stop("Error occurred while executing CURL request.")
       return(result)
     } else {
-      args2 <- c(args, list(timeout(timeout)))
+      headers[["Content-Type"]] <- response_type <- "application/json"
       if (stream_type == "completion") {
-        args2[["body"]][["prompt"]] <- "say \"test\""
-      } else if (stream_type == "chat_completion") {
-        args2[["body"]][["messages"]] <- list(list(role = "user", content = "say \"test\""))
-      }
-      args2[["body"]][["stream"]] <- FALSE
-      resp <- try_get(do.call(method, args2), max_tries = max_tries)
-
-      resp$request$options$postfields <- charToRaw(paste(jsonlite::toJSON(args[["body"]], auto_unbox = TRUE, digits = 22), collapse = "\n"))
-      resp$request$options$postfieldsize <- length(resp$request$options$postfields)
-
-      if (!is.null(stream_content)) {
-        if (stream_type == "completion") {
-          content <- charToRaw(toJSON(list(
-            object = "text_completion",
-            model = data$model,
-            choices = list(
-              list(
-                text = paste0(stream_content, collapse = ""),
-                finish_reason = "stop"
-              )
+        content <- charToRaw(toJSON(list(
+          object = "text_completion",
+          model = data$model,
+          choices = list(
+            list(
+              text = paste0(stream_content, collapse = ""),
+              finish_reason = "stop"
             )
-          ), auto_unbox = TRUE, digits = 22))
-        } else if (stream_type == "chat_completion") {
-          content <- charToRaw(toJSON(list(
-            object = "chat.completion",
-            model = data$model,
-            choices = list(
-              list(
-                message = list(content = paste0(stream_content, collapse = "")),
-                finish_reason = "stop"
-              )
+          )
+        ), auto_unbox = TRUE, digits = 22))
+      } else {
+        content <- charToRaw(toJSON(list(
+          object = "chat.completion",
+          model = data$model,
+          choices = list(
+            list(
+              message = list(content = paste0(stream_content, collapse = "")),
+              finish_reason = "stop"
             )
-          ), auto_unbox = TRUE, digits = 22))
-        }
-        resp$content <- content
+          )
+        ), auto_unbox = TRUE, digits = 22))
       }
+      req <- httr:::request_build("POST", url, httr:::body_config(data, encode))
+      resp <- httr:::response(
+        url = url, status_code = result,
+        headers = headers, all_headers = NULL, cookies = NULL,
+        content = content, date = Sys.time(), times = NULL,
+        request = req, handle = NULL
+      )
     }
   } else {
     args <- c(args, list(timeout(timeout)))
