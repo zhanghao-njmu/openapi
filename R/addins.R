@@ -1,3 +1,86 @@
+#' Create a list of HTML divs for a chat application
+#'
+#' This function takes in a list of messages and creates HTML divs
+#' for each message in a chat application. It also includes the
+#' HTML div for displaying ChatGPT output.
+#'
+#' @param messages A list of messages containing content, role, and time.
+#' @param openai_logo OpenAI logo content.
+#' @param user_logo User logo content.
+#'
+#' @return A list of HTML divs.
+#'
+#' @import shiny
+#'
+div_create <- function(messages, openai_logo, user_logo) {
+  divs <- list()
+  if (length(messages) > 0) {
+    content <- sapply(messages, function(x) x[["content"]])
+    role <- sapply(messages, function(x) x[["role"]])
+    time <- sapply(messages, function(x) x[["time"]])
+
+    # remove assistant's last message
+    if (role[length(role)] == "assistant") {
+      content <- content[-length(content)]
+      role <- role[-length(role)]
+      time <- time[-length(time)]
+    }
+
+    # create HTML divs for each message
+    for (i in seq_along(content)) {
+      if (role[i] == "user") {
+        divs <- c(divs, list(
+          div(
+            div(div(HTML(paste0(user_logo, collapse = "\n")), style = "width:30px; height:30px"),
+              div(style = "width:5px;"),
+              style = "display: flex; flex-direction: row;"
+            ),
+            div(
+              div(time[i] %||% as.character(Sys.time()), style = "height:20px;"),
+              div(class = "chat_input", gsub("\\n$", "", markdown(content[i])))
+            ),
+            style = "display: flex; flex-direction: row;"
+          ),
+          div(style = "height:20px;")
+        ))
+      } else {
+        divs <- c(divs, list(
+          div(
+            div(div(HTML(paste0(openai_logo, collapse = "\n")), style = "width:30px; height:30px"),
+              div(style = "width:5px;"),
+              style = "display: flex; flex-direction: row;"
+            ),
+            div(
+              div(time[i] %||% as.character(Sys.time()), style = "height:20px;"),
+              div(class = "chat_output", gsub("\\n$", "", markdown(content[i])))
+            ),
+            style = "display: flex; flex-direction: row;"
+          ),
+          div(style = "height:20px;")
+        ))
+      }
+    }
+  }
+
+  # add final HTML div for ChatGPT output
+  divs <- c(divs, list(
+    div(
+      div(div(HTML(paste0(openai_logo, collapse = "\n")), style = "width:30px; height:30px"),
+        div(style = "width:5px;"),
+        style = "display: flex; flex-direction: row;"
+      ),
+      div(
+        div(as.character(Sys.time()), style = "height:20px;"),
+        uiOutput(outputId = "chat_output_last", class = "chat_output")
+      ),
+      style = "display: flex; flex-direction: row;"
+    ),
+    div(style = "height:20px;")
+  ))
+
+  return(divs)
+}
+
 #' A Shiny Gadget for AI Chatbot based on OpenAI API
 #'
 #' This function generates a Shiny Gadget for an AI Chatbot based on the OpenAI API. The user can interact with the chatbot using prompts/questions and receive intelligent responses.
@@ -16,12 +99,11 @@
 #' @importFrom future.callr callr
 #' @export
 ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organization = NULL, ...) {
-  plan(callr)
   colors <- c(dark = "#202123", darkchat = "#353541", lightchat = "#4D4F5C", input = "#41404e")
   openai_path <- system.file("icons", "openai-icon.svg", package = "openapi")
-  openai_content <- readLines(openai_path, warn = FALSE)
+  openai_logo <- readLines(openai_path, warn = FALSE)
   user_path <- system.file("icons", "my-account-icon.svg", package = "openapi")
-  user_content <- readLines(user_path, warn = FALSE)
+  user_logo <- readLines(user_path, warn = FALSE)
 
   ui <- miniPage(
     useShinyjs(),
@@ -125,15 +207,15 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
           )
         )
       ),
-      miniTabPanel("Image",
+      miniTabPanel("Image(dev)",
         icon = icon("image"),
         miniContentPanel()
       ),
-      miniTabPanel("Audio",
+      miniTabPanel("Audio(dev)",
         icon = shiny::icon("microphone"),
         miniContentPanel()
       ),
-      miniTabPanel("Help",
+      miniTabPanel("Help(dev)",
         icon = icon("circle-info"),
         miniContentPanel()
       )
@@ -141,11 +223,13 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
   )
 
   server <- function(input, output, session) {
+    plan(callr)
+
     api_url <- api_url %||% getOption("openapi_api_url")
     api_key <- api_key %||% getOption("openapi_api_key")
     organization <- organization %||% getOption("openapi_organization")
     if (is.null(api_url) || is.null(api_key)) {
-      warning("api_url or api_key is not defined, please run the api_setup function to configure them.\n Exiting ChatGPT...")
+      warning("api_url or api_key is not defined, please run the api_setup function to configure them.")
       stopApp()
     }
 
@@ -158,73 +242,6 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
     })
 
     r <- reactiveValues(chat = ChatGPT$new(), messages = NULL, input = NULL, continuous = TRUE, async = NULL, processing = FALSE, stop = NULL)
-
-    stop_UI <- div(
-      div(actionButton("chat_stop", label = "Stop generating", icon = icon("stop"), width = "150px"), style = "text-align: center;"),
-      div(style = "height:10px")
-    )
-
-    div_create <- function(messages) {
-      divs <- list()
-      if (length(messages) > 0) {
-        content <- sapply(messages, function(x) x[["content"]])
-        role <- sapply(messages, function(x) x[["role"]])
-        time <- sapply(messages, function(x) x[["time"]])
-        if (role[length(role)] == "assistant") {
-          content <- content[-length(content)]
-          role <- role[-length(role)]
-          time <- time[-length(time)]
-        }
-        for (i in seq_along(content)) {
-          if (role[i] == "user") {
-            divs <- c(divs, list(
-              div(
-                div(div(HTML(paste0(user_content, collapse = "\n")), style = "width:30px; height:30px"),
-                  div(style = "width:5px;"),
-                  style = "display: flex; flex-direction: row;"
-                ),
-                div(
-                  div(time[i] %||% as.character(Sys.time()), style = "height:20px;"),
-                  div(class = "chat_input", gsub("\\n$", "", markdown(content[i])))
-                ),
-                style = "display: flex; flex-direction: row;"
-              ),
-              div(style = "height:20px;")
-            ))
-          } else {
-            divs <- c(divs, list(
-              div(
-                div(div(HTML(paste0(openai_content, collapse = "\n")), style = "width:30px; height:30px"),
-                  div(style = "width:5px;"),
-                  style = "display: flex; flex-direction: row;"
-                ),
-                div(
-                  div(time[i] %||% as.character(Sys.time()), style = "height:20px;"),
-                  div(class = "chat_output", gsub("\\n$", "", markdown(content[i])))
-                ),
-                style = "display: flex; flex-direction: row;"
-              ),
-              div(style = "height:20px;")
-            ))
-          }
-        }
-      }
-      divs <- c(divs, list(
-        div(
-          div(div(HTML(paste0(openai_content, collapse = "\n")), style = "width:30px; height:30px"),
-            div(style = "width:5px;"),
-            style = "display: flex; flex-direction: row;"
-          ),
-          div(
-            div(as.character(Sys.time()), style = "height:20px;"),
-            uiOutput(outputId = "chat_output_last", class = "chat_output")
-          ),
-          style = "display: flex; flex-direction: row;"
-        ),
-        div(style = "height:20px;")
-      ))
-      return(divs)
-    }
 
     observe({
       if (input$chat_input != "" && isFALSE(r$processing)) {
@@ -292,9 +309,10 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
         r$chat$messages <- r$messages
         r$chat$index <- length(r$chat$messages)
       }
-      r$async <- ""
+      r$async <- NULL
       r$processing <- FALSE
       r$stop <- NULL
+      NULL
     }) %>% bindEvent(input$chat_stop)
 
     observe({
@@ -305,27 +323,33 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
       if (inherits(r$async, "Future")) {
         r$async$process$kill()
       }
-      r$async <- ""
+      r$async <- NULL
       r$processing <- FALSE
       r$stop <- NULL
-      r$text <- "This is a new chat.\n\nPlease enter your questions or topics in the input box below and press \"Send\" to start chatting with the chatbot."
       r$chat <- ChatGPT$new()
       r$messages <- NULL
       NULL
     }) %>% bindEvent(input$chat_clear)
 
     observe({
-      if (is.null(r$async)) {
+      if (is.null(r$messages)) {
         text <- "Welcome to the ChatGPT!\n\nThis is an AI chatbot based on the OpenAI API that can engage in intelligent conversations with you.\n\nPlease enter your questions or topics in the input box below and press \"Send\" button on the right to start chatting with the chatbot.\n\nHave a great time!"
       } else {
         if (isTRUE(r$processing)) {
-          r$stop <- stop_UI
+          r$stop <- div(
+            div(actionButton("chat_stop", label = "Stop generating", icon = icon("stop"), width = "150px"), style = "text-align: center;"),
+            div(style = "height:10px")
+          )
           invalidateLater(50)
           text <- readLines(file, warn = FALSE)
           if (identical(text, "") || length(text) == 0) {
             text <- "..."
           }
-          if (identical(text[length(text)], "data: [DONE]") || resolved(r$async)) {
+          if (identical(text[length(text)], "data: [DONE]") || (resolved(r$async) && !is.null(r$async))) {
+            # print(text)
+            # print(resolved(r$async))
+            # print(value(r$async))
+
             if (identical(text[length(text)], "data: [DONE]")) {
               text <- text[-length(text)]
             }
@@ -364,7 +388,7 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
                    padding: 10px 10px 0 10px; border-radius: 5px; border: 2px solid ", colors["darkchat"], ";
                    white-space: pre-wrap; overflow-wrap: break-word; display: inline-block;}")
           )),
-          div_create(r$messages)
+          div_create(r$messages, openai_logo = openai_logo, user_logo = user_logo)
         )
       )
     })

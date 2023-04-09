@@ -322,6 +322,7 @@ ChatGPT <- R6Class(
           } else {
             messages <- self$messages[length(self$messages)]
           }
+          messages <- lapply(self$messages, function(x) list("role" = x[["role"]], "content" = x[["content"]]))
           resp <- create_chat_completion(messages = messages, stream = stream, ...)
           self$latest_response <- resp
           if (inherits(resp, "CompletionResponse")) {
