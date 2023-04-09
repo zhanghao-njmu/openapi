@@ -11,6 +11,7 @@
 #' @import shiny
 #' @import miniUI
 #' @importFrom shinyjs useShinyjs enable disable
+#' @importFrom shinyWidgets materialSwitch
 #' @importFrom future plan future value resolved
 #' @importFrom future.callr callr
 #' @export
@@ -36,17 +37,9 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
         tags$head(
           tags$style(
             paste0("#chat_input{color:white; background: ", colors["input"], "; font-size:12px;
-                    height:auto; min-height:36px; max-height: 100%;
+                    height:auto; min-height:100px; max-height: 100%;
                     white-space: pre-wrap; overflow-wrap: break-word;}")
           )
-        ),
-        tags$head(
-          tags$script("
-                      var textarea = document.getElementById(\"chat_input\");
-                      textarea.addEventListener(\"input\", function() {
-                          $(this).height(0);
-                          $(this).height(this.scrollHeight);
-                      });")
         ),
         # tags$head(
         #   tags$script("
@@ -88,7 +81,10 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
               uiOutput("chat_output"),
               div(style = "border-bottom: 1px solid #ccc;"),
               div(style = "height:5px;"),
-              div(actionButton("chat_regenerate", label = "Regenerate", icon = icon("repeat"), width = "120px"), style = "display:inline-block; float:right;")
+              div(actionButton("chat_regenerate", label = "Regenerate", icon = icon("repeat"), width = "120px"), style = "float:right;"),
+              div(style = "height:50px")
+              # div(style = "border-top: 2px solid #202123"),
+              # div(style = "height:5px;")
             ),
             div(
               id = "chat_input_container", style = "bottom: 0; height: 100%; max-height: 100%; width: 100%;",
@@ -108,14 +104,21 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
                       height = "100%",
                       placeholder = "Enter your prompts here (Press Enter + Shift to start a new line)"
                     ),
+                    tags$script("
+                      var textarea = document.getElementById(\"chat_input\");
+                      textarea.addEventListener(\"input\", function() {
+                          $(this).height(0);
+                          $(this).height(this.scrollHeight);
+                      });")
                   ),
                   "data-proxy-click" = "chat_submit"
                 ),
                 fillCol(
-                  flex = c(NA, NA, NA),
-                  actionButton("chat_submit", label = "Send", icon = icon("paper-plane"), width = "105px", style = "text-align: center;"),
+                  flex = NA,
+                  materialSwitch("chat_continuous", label = "Continuous", status = "primary", value = TRUE, width = "130px"),
+                  actionButton("chat_submit", label = "Send", icon = icon("paper-plane"), width = "130px", style = "text-align: center;"),
                   div(style = "height:3px"),
-                  actionButton("chat_clear", label = "Clear chat", icon = icon("rotate-right"), width = "105px", style = "text-align: center;")
+                  actionButton("chat_clear", label = "Clear chat", icon = icon("rotate-right"), width = "130px", style = "text-align: center;")
                 )
               )
             )
@@ -154,7 +157,8 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
       unlink(conversation)
     })
 
-    r <- reactiveValues(chat = ChatGPT$new(), messages = NULL, input = NULL, async = NULL, processing = FALSE, stop = NULL)
+    r <- reactiveValues(chat = ChatGPT$new(), messages = NULL, input = NULL, continuous = TRUE, async = NULL, processing = FALSE, stop = NULL)
+
     stop_UI <- div(
       div(actionButton("chat_stop", label = "Stop generating", icon = icon("stop"), width = "150px"), style = "text-align: center;"),
       div(style = "height:10px")
@@ -164,41 +168,60 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
       divs <- list()
       if (length(messages) > 0) {
         content <- sapply(messages, function(x) x[["content"]])
-        names(content) <- sapply(messages, function(x) x[["role"]])
-        if (names(content)[length(names(content))] == "assistant") {
+        role <- sapply(messages, function(x) x[["role"]])
+        time <- sapply(messages, function(x) x[["time"]])
+        if (role[length(role)] == "assistant") {
           content <- content[-length(content)]
+          role <- role[-length(role)]
+          time <- time[-length(time)]
         }
         for (i in seq_along(content)) {
-          if (names(content[i]) == "user") {
+          if (role[i] == "user") {
             divs <- c(divs, list(
-              fluidRow(
-                # flex = c(NA, NA, 1),
-                div(HTML(paste0(user_content, collapse = "\n")), style = "width:30px; height:30px"),
-                div(style = "height:2px"),
-                div(class = "chat_input", gsub("\\n$", "", markdown(content[i]))),
-                div(style = "height:10px")
-              )
+              div(
+                div(div(HTML(paste0(user_content, collapse = "\n")), style = "width:30px; height:30px"),
+                  div(style = "width:5px;"),
+                  style = "display: flex; flex-direction: row;"
+                ),
+                div(
+                  div(time[i] %||% as.character(Sys.time()), style = "height:20px;"),
+                  div(class = "chat_input", gsub("\\n$", "", markdown(content[i])))
+                ),
+                style = "display: flex; flex-direction: row;"
+              ),
+              div(style = "height:20px;")
             ))
           } else {
             divs <- c(divs, list(
-              fluidRow(
-                # flex = c(NA, NA, 1),
-                div(HTML(paste0(openai_content, collapse = "\n")), style = "width:30px; height:30px"),
-                div(style = "height:2px"),
-                div(class = "chat_output", gsub("\\n$", "", markdown(content[i]))),
-                div(style = "height:10px")
-              )
+              div(
+                div(div(HTML(paste0(openai_content, collapse = "\n")), style = "width:30px; height:30px"),
+                  div(style = "width:5px;"),
+                  style = "display: flex; flex-direction: row;"
+                ),
+                div(
+                  div(time[i] %||% as.character(Sys.time()), style = "height:20px;"),
+                  div(class = "chat_output", gsub("\\n$", "", markdown(content[i])))
+                ),
+                style = "display: flex; flex-direction: row;"
+              ),
+              div(style = "height:20px;")
             ))
           }
         }
       }
       divs <- c(divs, list(
-        fluidRow(
-          div(HTML(paste0(openai_content, collapse = "\n")), style = "width:30px; height:30px"),
-          div(style = "height:2px"),
-          uiOutput(outputId = "chat_output_last", class = "chat_output"),
-          div(style = "height:10px;")
-        )
+        div(
+          div(div(HTML(paste0(openai_content, collapse = "\n")), style = "width:30px; height:30px"),
+            div(style = "width:5px;"),
+            style = "display: flex; flex-direction: row;"
+          ),
+          div(
+            div(as.character(Sys.time()), style = "height:20px;"),
+            uiOutput(outputId = "chat_output_last", class = "chat_output")
+          ),
+          style = "display: flex; flex-direction: row;"
+        ),
+        div(style = "height:20px;")
       ))
       return(divs)
     }
@@ -207,17 +230,20 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
       if (input$chat_input != "" && isFALSE(r$processing)) {
         disable("chat_submit")
         disable("chat_regenerate")
+        disable("chat_continuous")
 
         r$input <- input$chat_input
         updateTextAreaInput(session, inputId = "chat_input", value = "")
-        r$messages <- c(r$messages, list(list("role" = "user", "content" = r$input)))
+        r$messages <- c(r$messages, list(list("role" = "user", "content" = r$input, "time" = as.character(Sys.time()))))
         writeLines("", file)
 
         rchat <- r$chat
         rinput <- r$input
+        rcontinuous <- input$chat_continuous
         r$async <- future(rchat$chat(rinput,
           stream = TRUE,
           stream_file = conversation,
+          continuous = rcontinuous,
           api_url = api_url,
           api_key = api_key,
           organization = organization,
@@ -231,6 +257,7 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
     observe({
       disable("chat_submit")
       disable("chat_regenerate")
+      disable("chat_continuous")
 
       if (inherits(r$async, "Future")) {
         r$chat <- value(r$async)
@@ -239,9 +266,11 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
 
       r$messages <- r$messages[-length(r$messages)]
       rchat <- r$chat
+      rcontinuous <- input$chat_continuous
       r$async <- future(rchat$regenerate(
         stream = TRUE,
         stream_file = conversation,
+        continuous = rcontinuous,
         api_url = api_url,
         api_key = api_key,
         organization = organization,
@@ -254,11 +283,12 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
     observe({
       enable("chat_submit")
       enable("chat_regenerate")
+      enable("chat_continuous")
 
       if (inherits(r$async, "Future")) {
         r$async$process$kill()
         r$text <- paste0(r$text, "[The message was interrupted]")
-        r$messages <- c(r$messages, list(list("role" = "assistant", "content" = r$text)))
+        r$messages <- c(r$messages, list(list("role" = "assistant", "content" = r$text, "time" = as.character(Sys.time()))))
         r$chat$messages <- r$messages
         r$chat$index <- length(r$chat$messages)
       }
@@ -270,6 +300,7 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
     observe({
       enable("chat_submit")
       enable("chat_regenerate")
+      enable("chat_continuous")
 
       if (inherits(r$async, "Future")) {
         r$async$process$kill()
@@ -282,6 +313,43 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
       r$messages <- NULL
       NULL
     }) %>% bindEvent(input$chat_clear)
+
+    observe({
+      if (is.null(r$async)) {
+        text <- "Welcome to the ChatGPT!\n\nThis is an AI chatbot based on the OpenAI API that can engage in intelligent conversations with you.\n\nPlease enter your questions or topics in the input box below and press \"Send\" button on the right to start chatting with the chatbot.\n\nHave a great time!"
+      } else {
+        if (isTRUE(r$processing)) {
+          r$stop <- stop_UI
+          invalidateLater(50)
+          text <- readLines(file, warn = FALSE)
+          if (identical(text, "") || length(text) == 0) {
+            text <- "..."
+          }
+          if (identical(text[length(text)], "data: [DONE]") || resolved(r$async)) {
+            if (identical(text[length(text)], "data: [DONE]")) {
+              text <- text[-length(text)]
+            }
+            if (inherits(r$async, "Future")) {
+              r$chat <- value(r$async)
+              new_messages <- r$chat$messages[length(r$chat$messages)]
+              new_messages[[1]][["time"]] <- as.character(Sys.time())
+              r$messages <- c(r$messages, new_messages)
+            }
+            r$processing <- FALSE
+            r$stop <- NULL
+            enable("chat_submit")
+            enable("chat_regenerate")
+            enable("chat_continuous")
+          }
+          # session$sendCustomMessage(type = "scrollCallback", 1)
+        } else {
+          text <- r$text
+        }
+      }
+      # print(text)
+      r$text <- gsub("\\n$", "", markdown(paste0(text, collapse = "\n")))
+      NULL
+    })
 
     output$chat_output <- renderUI({
       fluidPage(
@@ -299,36 +367,6 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
           div_create(r$messages)
         )
       )
-    })
-
-    observe({
-      if (is.null(r$async)) {
-        text <- "Welcome to the ChatGPT!\n\nThis is an AI chatbot based on the OpenAI API that can engage in intelligent conversations with you.\n\nPlease enter your questions or topics in the input box below and press \"Send\" button on the right to start chatting with the chatbot.\n\nHave a great time!"
-      } else {
-        if (isTRUE(r$processing)) {
-          r$stop <- stop_UI
-          invalidateLater(50)
-          text <- readLines(file, warn = FALSE)
-          if (identical(text[length(text)], "data: [DONE]") || resolved(r$async)) {
-            if (identical(text[length(text)], "data: [DONE]")) {
-              text <- text[-length(text)]
-            }
-            if (inherits(r$async, "Future")) {
-              r$chat <- value(r$async)
-              r$messages <- c(r$messages, r$chat$messages[length(r$chat$messages)])
-            }
-            r$processing <- FALSE
-            r$stop <- NULL
-            enable("chat_submit")
-            enable("chat_regenerate")
-          }
-          # session$sendCustomMessage(type = "scrollCallback", 1)
-        } else {
-          text <- r$text
-        }
-      }
-      r$text <- gsub("\\n$", "", markdown(paste0(text, collapse = "\n")))
-      NULL
     })
 
     output$chat_output_last <- renderUI({

@@ -265,7 +265,7 @@ ChatGPT <- R6Class(
           )
         }
       } else if (!is.null(messages)) {
-        self$messages <- messages
+        self$messages <- lapply(messages, function(x) list("role" = x[["role"]], "content" = x[["content"]]))
       }
       invisible(self)
     },
@@ -281,13 +281,13 @@ ChatGPT <- R6Class(
           )
         )
         if (isTRUE(continuous)) {
-          messages <- c(self$messages, messages)
+          messages <- c(lapply(self$messages, function(x) list("role" = x[["role"]], "content" = x[["content"]])), messages)
         }
         resp <- create_chat_completion(messages = messages, stream = stream, ...)
         self$latest_response <- resp
         if (inherits(resp, "CompletionResponse")) {
           all_messages <- c(
-            self$messages,
+            lapply(self$messages, function(x) list("role" = x[["role"]], "content" = x[["content"]])),
             list(
               list(
                 "role" = role,
@@ -325,12 +325,15 @@ ChatGPT <- R6Class(
           resp <- create_chat_completion(messages = messages, stream = stream, ...)
           self$latest_response <- resp
           if (inherits(resp, "CompletionResponse")) {
-            all_messages <- c(self$messages, list(
+            all_messages <- c(
+              lapply(self$messages, function(x) list("role" = x[["role"]], "content" = x[["content"]])),
               list(
-                "role" = "assistant",
-                "content" = self$latest_response$extract("choices")[1]
+                list(
+                  "role" = "assistant",
+                  "content" = self$latest_response$extract("choices")[1]
+                )
               )
-            ))
+            )
             self$messages <- all_messages
             self$index <- length(self$messages)
           } else {
@@ -338,7 +341,7 @@ ChatGPT <- R6Class(
           }
         }
       } else {
-        warning("There is no need to regenerate a reply.", immediate. = TRUE)
+        warning("No previous message.", immediate. = TRUE)
       }
       invisible(self)
     },
