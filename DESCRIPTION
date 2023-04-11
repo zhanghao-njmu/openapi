@@ -22,6 +22,10 @@ Imports:
     rstudioapi (>= 0.5),
     shinyjs,
     shinyWidgets,
+    shinydashboard,
+    shinydashboardPlus,
+    shinymanager,
+    shinyjs,
     future,
     future.callr,
     diffr

@@ -11,7 +11,7 @@
 #' @return A list of HTML divs.
 #'
 #' @import shiny
-#'
+#' @export
 div_create <- function(messages, openai_logo, user_logo) {
   divs <- list()
   if (length(messages) > 0) {
@@ -233,15 +233,13 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
       stopApp()
     }
 
-    conversation <- tempfile(fileext = ".txt")
-    file.create(conversation)
-    file <- file(conversation)
+    stream_file <- tempfile(fileext = ".txt")
+    file.create(stream_file)
     onStop(function() {
-      close(file)
-      unlink(conversation)
+      unlink(stream_file)
     })
 
-    r <- reactiveValues(chat = ChatGPT$new(), messages = NULL, input = NULL, continuous = TRUE, async = NULL, processing = FALSE, stop = NULL)
+    r <- reactiveValues(chat = ChatGPT$new(), messages = NULL, text = NULL, input = NULL, continuous = TRUE, async = NULL, processing = FALSE, stop = NULL)
 
     observe({
       if (input$chat_input != "" && isFALSE(r$processing)) {
@@ -252,14 +250,14 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
         r$input <- input$chat_input
         updateTextAreaInput(session, inputId = "chat_input", value = "")
         r$messages <- c(r$messages, list(list("role" = "user", "content" = r$input, "time" = as.character(Sys.time()))))
-        writeLines("", file)
+        writeLines("", stream_file)
 
         rchat <- r$chat
         rinput <- r$input
         rcontinuous <- input$chat_continuous
         r$async <- future(rchat$chat(rinput,
           stream = TRUE,
-          stream_file = conversation,
+          stream_file = stream_file,
           continuous = rcontinuous,
           api_url = api_url,
           api_key = api_key,
@@ -279,14 +277,14 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
       if (inherits(r$async, "Future")) {
         r$chat <- value(r$async)
       }
-      writeLines("", file)
+      writeLines("", stream_file)
 
       r$messages <- r$messages[-length(r$messages)]
       rchat <- r$chat
       rcontinuous <- input$chat_continuous
       r$async <- future(rchat$regenerate(
         stream = TRUE,
-        stream_file = conversation,
+        stream_file = stream_file,
         continuous = rcontinuous,
         api_url = api_url,
         api_key = api_key,
@@ -341,7 +339,7 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
             div(style = "height:10px")
           )
           invalidateLater(50)
-          text <- readLines(file, warn = FALSE)
+          text <- readLines(stream_file, warn = FALSE)
           if (identical(text, "") || length(text) == 0) {
             text <- "..."
           }
