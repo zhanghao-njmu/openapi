@@ -12,11 +12,9 @@ create_edit(
   n = 1,
   temperature = 1,
   top_p = 1,
-  api_url = NULL,
-  api_key = NULL,
-  organization = NULL,
   max_tries = 1,
-  timeout = 300
+  timeout = 300,
+  ...
 )
 }
 \arguments{
@@ -34,15 +32,15 @@ create_edit(
 
 \item{top_p}{A numeric value indicating the likelihood that the next word in the generated text will be among the most likely candidates. Values closer to 0 are more conservative, values closer to 1 are more creative. Default is 1.}
 
+\item{max_tries}{An integer indicating the maximum number of attempts to make a successful API call. Default is 1.}
+
+\item{timeout}{An integer indicating the maximum wait time in seconds for the API to return a response. Default is 300.}
+
 \item{api_url}{A character string representing the URL for the OpenAI API. Default is NULL.}
 
 \item{api_key}{A character string representing the API key. Default is NULL.}
 
 \item{organization}{A character string representing the name of the organization associated with the API key. Default is NULL.}
-
-\item{max_tries}{An integer indicating the maximum number of attempts to make a successful API call. Default is 1.}
-
-\item{timeout}{An integer indicating the maximum wait time in seconds for the API to return a response. Default is 300.}
 }
 \value{
 Response object of class 'CompletionResponse'.

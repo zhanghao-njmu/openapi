@@ -6,9 +6,9 @@
 \usage{
 code_create_test(
   code,
-  additional_instructions = getOption("openapi_additional_instructions"),
-  explain = getOption("openapi_explain") \%||\% TRUE,
-  simplify = getOption("openapi_simplify") \%||\% TRUE,
+  additional_instructions = NULL,
+  explain = TRUE,
+  simplify = TRUE,
   ...
 )
 }

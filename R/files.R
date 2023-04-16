@@ -11,17 +11,12 @@
 #'
 #' @export
 list_files <- function(endpoint = "v1/files",
-                       api_url = "https://api.openai.com",
-                       api_key = NULL,
-                       organization = NULL,
                        max_tries = 1,
-                       timeout = 300) {
+                       timeout = 300,
+                       ...) {
   response <- making_requests(
     method = "GET",
     endpoint = endpoint,
-    api_url = api_url,
-    api_key = api_key,
-    organization = organization,
     max_tries = max_tries,
     timeout = timeout
   )
@@ -45,11 +40,9 @@ list_files <- function(endpoint = "v1/files",
 upload_file <- function(endpoint = "v1/files",
                         file,
                         purpose = "fine-tune",
-                        api_url = NULL,
-                        api_key = NULL,
-                        organization = NULL,
                         max_tries = 1,
-                        timeout = 300) {
+                        timeout = 300,
+                        ...) {
   data <- list()
   data[["file"]] <- httr::upload_file(file)
   data[["purpose"]] <- purpose
@@ -60,11 +53,9 @@ upload_file <- function(endpoint = "v1/files",
     data = data,
     encode = "multipart",
     post_type = "multipart/form-data",
-    api_url = api_url,
-    api_key = api_key,
-    organization = organization,
     max_tries = max_tries,
-    timeout = timeout
+    timeout = timeout,
+    ...
   )
   return(parse_response(response))
 }
@@ -85,19 +76,15 @@ upload_file <- function(endpoint = "v1/files",
 delete_file <- function(endpoint = "v1/files",
                         file_id,
                         purpose = "fine-tune",
-                        api_url = NULL,
-                        api_key = NULL,
-                        organization = NULL,
                         max_tries = 1,
-                        timeout = 300) {
+                        timeout = 300,
+                        ...) {
   response <- making_requests(
     method = "DELETE",
     endpoint = paste(endpoint, file_id, sep = "/"),
-    api_url = api_url,
-    api_key = api_key,
-    organization = organization,
     max_tries = max_tries,
-    timeout = timeout
+    timeout = timeout,
+    ...
   )
   return(parse_response(response))
 }
@@ -110,19 +97,15 @@ delete_file <- function(endpoint = "v1/files",
 #' @export
 retrieve_file <- function(endpoint = "v1/files",
                           file_id,
-                          api_url = NULL,
-                          api_key = NULL,
-                          organization = NULL,
                           max_tries = 1,
-                          timeout = 300) {
+                          timeout = 300,
+                          ...) {
   response <- making_requests(
     method = "GET",
     endpoint = paste(endpoint, file_id, sep = "/"),
-    api_url = api_url,
-    api_key = api_key,
-    organization = organization,
     max_tries = max_tries,
-    timeout = timeout
+    timeout = timeout,
+    ...
   )
   return(parse_response(response))
 }
@@ -135,19 +118,15 @@ retrieve_file <- function(endpoint = "v1/files",
 #' @export
 retrieve_file_content <- function(endpoint = "v1/files",
                                   file_id,
-                                  api_url = NULL,
-                                  api_key = NULL,
-                                  organization = NULL,
                                   max_tries = 1,
-                                  timeout = 300) {
+                                  timeout = 300,
+                                  ...) {
   response <- making_requests(
     method = "GET",
     endpoint = paste(endpoint, file_id, "content", sep = "/"),
-    api_url = api_url,
-    api_key = api_key,
-    organization = organization,
     max_tries = max_tries,
-    timeout = timeout
+    timeout = timeout,
+    ...
   )
   return(parse_response(response))
 }

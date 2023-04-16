@@ -12,11 +12,9 @@ create_fine_tune <- function(endpoint = "v1/fine-tunes",
                              classification_positive_class = NULL,
                              classification_betas = NULL,
                              suffix = NULL,
-                             api_url = NULL,
-                             api_key = NULL,
-                             organization = NULL,
                              max_tries = 1,
-                             timeout = 300) {
+                             timeout = 300,
+                             ...) {
   data <- list()
   data[["training_file"]] <- training_file
   data[["validation_file"]] <- validation_file
@@ -35,30 +33,24 @@ create_fine_tune <- function(endpoint = "v1/fine-tunes",
     method = "POST",
     endpoint = endpoint,
     data = data,
-    api_url = api_url,
-    api_key = api_key,
-    organization = organization,
     max_tries = max_tries,
-    timeout = timeout
+    timeout = timeout,
+    ...
   )
   return(parse_response(response))
 }
 
 #' @export
 list_fine_tunes <- function(endpoint = "v1/fine-tunes",
-                            api_url = NULL,
-                            api_key = NULL,
-                            organization = NULL,
                             max_tries = 1,
-                            timeout = 300) {
+                            timeout = 300,
+                            ...) {
   response <- making_requests(
     method = "GET",
     endpoint = endpoint,
-    api_url = api_url,
-    api_key = api_key,
-    organization = organization,
     max_tries = max_tries,
-    timeout = timeout
+    timeout = timeout,
+    ...
   )
   return(parse_response(response))
 }
@@ -66,19 +58,15 @@ list_fine_tunes <- function(endpoint = "v1/fine-tunes",
 #' @export
 retrieve_fine_tunes <- function(endpoint = "v1/fine-tunes",
                                 fine_tune_id,
-                                api_url = NULL,
-                                api_key = NULL,
-                                organization = NULL,
                                 max_tries = 1,
-                                timeout = 300) {
+                                timeout = 300,
+                                ...) {
   response <- making_requests(
     method = "GET",
     endpoint = paste(endpoint, fine_tune_id, sep = "/"),
-    api_url = api_url,
-    api_key = api_key,
-    organization = organization,
     max_tries = max_tries,
-    timeout = timeout
+    timeout = timeout,
+    ...
   )
   return(parse_response(response))
 }
@@ -86,19 +74,15 @@ retrieve_fine_tunes <- function(endpoint = "v1/fine-tunes",
 #' @export
 cancel_fine_tunes <- function(endpoint = "v1/fine-tunes",
                               fine_tune_id,
-                              api_url = NULL,
-                              api_key = NULL,
-                              organization = NULL,
                               max_tries = 1,
-                              timeout = 300) {
+                              timeout = 300,
+                              ...) {
   response <- making_requests(
     method = "GET",
     endpoint = paste(endpoint, fine_tune_id, "cancel", sep = "/"),
-    api_url = api_url,
-    api_key = api_key,
-    organization = organization,
     max_tries = max_tries,
-    timeout = timeout
+    timeout = timeout,
+    ...
   )
   return(parse_response(response))
 }
@@ -107,20 +91,16 @@ cancel_fine_tunes <- function(endpoint = "v1/fine-tunes",
 list_fine_tune_events <- function(endpoint = "v1/fine-tunes",
                                   fine_tune_id,
                                   stream = FALSE,
-                                  api_url = NULL,
-                                  api_key = NULL,
-                                  organization = NULL,
                                   max_tries = 1,
-                                  timeout = 300) {
+                                  timeout = 300,
+                                  ...) {
   response <- making_requests(
     method = "GET",
     endpoint = paste0(paste(endpoint, fine_tune_id, "events", sep = "/"), "?stream=", stream),
     stream = stream,
-    api_url = api_url,
-    api_key = api_key,
-    organization = organization,
     max_tries = max_tries,
-    timeout = timeout
+    timeout = timeout,
+    ...
   )
   return(parse_response(response))
 }
@@ -128,19 +108,15 @@ list_fine_tune_events <- function(endpoint = "v1/fine-tunes",
 #' @export
 delete_fine_tune_model <- function(endpoint = "v1/models",
                                    model,
-                                   api_url = NULL,
-                                   api_key = NULL,
-                                   organization = NULL,
                                    max_tries = 1,
-                                   timeout = 300) {
+                                   timeout = 300,
+                                   ...) {
   response <- making_requests(
     method = "DELETE",
     endpoint = paste(endpoint, model, sep = "/"),
-    api_url = api_url,
-    api_key = api_key,
-    organization = organization,
     max_tries = max_tries,
-    timeout = timeout
+    timeout = timeout,
+    ...
   )
   return(parse_response(response))
 }

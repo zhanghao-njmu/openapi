@@ -11,16 +11,13 @@ create_chat_completion(
   temperature = 1,
   top_p = 1,
   n = 1,
-  stream = FALSE,
+  stream = TRUE,
   stop = NULL,
   max_tokens = NULL,
   presence_penalty = 0,
   frequency_penalty = 0,
   logit_bias = NULL,
   user = NULL,
-  api_url = NULL,
-  api_key = NULL,
-  organization = NULL,
   max_tries = 1,
   timeout = 300,
   ...
@@ -53,17 +50,17 @@ create_chat_completion(
 
 \item{user}{A string identifying the user whose conversation history is being used. Default is NULL.}
 
-\item{api_url}{URL to the OpenAI API. Can be set to a custom endpoint. Default is NULL.}
-
-\item{api_key}{API key for authentication with the OpenAI API. Default is NULL.}
-
-\item{organization}{Organization ID for authentication with the OpenAI API. Default is NULL.}
-
 \item{max_tries}{The maximum number of attempts to make for a single API call. Default is 1.}
 
 \item{timeout}{The maximum time in seconds to wait for a response from the OpenAI API. Default is 300.}
 
 \item{...}{Additional arguments to be passed to 'making_requests()' function.}
+
+\item{api_url}{URL to the OpenAI API. Can be set to a custom endpoint. Default is NULL.}
+
+\item{api_key}{API key for authentication with the OpenAI API. Default is NULL.}
+
+\item{organization}{Organization ID for authentication with the OpenAI API. Default is NULL.}
 }
 \value{
 Response object of class 'CompletionResponse'.

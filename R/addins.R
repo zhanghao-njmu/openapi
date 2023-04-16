@@ -1,18 +1,5 @@
-#' Create a list of HTML divs for a chat application
-#'
-#' This function takes in a list of messages and creates HTML divs
-#' for each message in a chat application. It also includes the
-#' HTML div for displaying ChatGPT output.
-#'
-#' @param messages A list of messages containing content, role, and time.
-#' @param openai_logo OpenAI logo content.
-#' @param user_logo User logo content.
-#'
-#' @return A list of HTML divs.
-#'
-#' @import shiny
-#' @export
 div_create <- function(messages, openai_logo, user_logo) {
+  # print(rnorm(1))
   divs <- list()
   if (length(messages) > 0) {
     content <- sapply(messages, function(x) x[["content"]])
@@ -81,16 +68,29 @@ div_create <- function(messages, openai_logo, user_logo) {
   return(divs)
 }
 
+div_update <- function(messages, openai_logo, user_logo) {
+  fluidPage(
+    tagList(
+      tags$head(tags$style(
+        paste0(".chat_input {color:black; background-color: white;
+                    padding: 10px 10px 0 10px; border-radius: 5px; border: 2px solid #4D4F5C;
+                    white-space: pre-wrap; overflow-wrap: break-word; display: inline-block;}")
+      )),
+      tags$head(tags$style(
+        paste0(".chat_output {color:black; background-color: white;
+                   padding: 10px 10px 0 10px; border-radius: 5px; border: 2px solid #353541;
+                   white-space: pre-wrap; overflow-wrap: break-word; display: inline-block;}")
+      )),
+      div_create(messages, openai_logo = openai_logo, user_logo = user_logo)
+    )
+  )
+}
+
 #' A Shiny Gadget for AI Chatbot based on OpenAI API
 #'
 #' This function generates a Shiny Gadget for an AI Chatbot based on the OpenAI API. The user can interact with the chatbot using prompts/questions and receive intelligent responses.
 #'
 #' @param viewer A viewer pane to use for displaying the gadget (defaults to paneViewer(minHeight = 300)).
-#' @param api_url The URL of the OpenAI API.
-#' @param api_key The API key to access the OpenAI API.
-#' @param organization The ID of the organization used to access the OpenAI API.
-#' @param ... Additional arguments to pass to the ChatGPT class constructor.
-#'
 #' @import shiny
 #' @import miniUI
 #' @importFrom shinyjs useShinyjs enable disable
@@ -98,8 +98,20 @@ div_create <- function(messages, openai_logo, user_logo) {
 #' @importFrom future plan future value resolved
 #' @importFrom future.callr callr
 #' @export
-ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organization = NULL, ...) {
-  colors <- c(dark = "#202123", darkchat = "#353541", lightchat = "#4D4F5C", input = "#41404e")
+ChatGPT_gadget <- function(viewer = NULL, ...) {
+  args <- as.list(match.call())[-1]
+  args[["api_url"]] <- args[["api_url"]] %||% getOption("openapi_api_url")
+  args[["api_key"]] <- args[["api_key"]] %||% getOption("openapi_api_key")
+  args[["key_nm"]] <- args[["key_nm"]] %||% getOption("openapi_key_nm")
+  args[["organization"]] <- args[["organization"]] %||% getOption("openapi_organization")
+  args[["organization_nm"]] <- args[["organization_nm"]] %||% getOption("openapi_organization_nm")
+
+  if (is.null(args[["api_url"]]) || is.null(args[["api_key"]])) {
+    warning("api_url or api_key is not defined, please run the api_setup function to configure them.")
+    stopApp()
+  }
+
+  colors <- c(dark = "#202123", input = "#41404e")
   openai_path <- system.file("icons", "openai-icon.svg", package = "openapi")
   openai_logo <- readLines(openai_path, warn = FALSE)
   user_path <- system.file("icons", "my-account-icon.svg", package = "openapi")
@@ -189,8 +201,9 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
                     tags$script("
                       var textarea = document.getElementById(\"chat_input\");
                       textarea.addEventListener(\"input\", function() {
-                          $(this).height(0);
-                          $(this).height(this.scrollHeight);
+                          textarea.style.height = 'auto';
+                          textarea.style.overflowY = 'hidden';
+                          textarea.style.height = `${textarea.scrollHeight}px`;
                       });")
                   ),
                   "data-proxy-click" = "chat_submit"
@@ -223,48 +236,25 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
   )
 
   server <- function(input, output, session) {
-    plan(callr)
+    args <- args[setdiff(names(args), "viewer")]
+    r <- reactiveValues(
+      room = ChatRoom$new(chat_params = args),
+      refresh = FALSE
+    )
 
-    api_url <- api_url %||% getOption("openapi_api_url")
-    api_key <- api_key %||% getOption("openapi_api_key")
-    organization <- organization %||% getOption("openapi_organization")
-    if (is.null(api_url) || is.null(api_key)) {
-      warning("api_url or api_key is not defined, please run the api_setup function to configure them.")
-      stopApp()
-    }
-
-    stream_file <- tempfile(fileext = ".txt")
-    file.create(stream_file)
-    onStop(function() {
-      unlink(stream_file)
-    })
-
-    r <- reactiveValues(chat = ChatGPT$new(), messages = NULL, text = NULL, input = NULL, continuous = TRUE, async = NULL, processing = FALSE, stop = NULL)
+    stopUI <- reactiveVal()
+    historyUI <- reactiveVal()
+    outputUI <- reactiveVal()
 
     observe({
-      if (input$chat_input != "" && isFALSE(r$processing)) {
+      if (input$chat_input != "" && isFALSE(r$refresh)) {
         disable("chat_submit")
         disable("chat_regenerate")
         disable("chat_continuous")
-
-        r$input <- input$chat_input
+        r$room$chat_submit(prompt = input$chat_input, role = "user", continuous = input$chat_continuous)
         updateTextAreaInput(session, inputId = "chat_input", value = "")
-        r$messages <- c(r$messages, list(list("role" = "user", "content" = r$input, "time" = as.character(Sys.time()))))
-        writeLines("", stream_file)
-
-        rchat <- r$chat
-        rinput <- r$input
-        rcontinuous <- input$chat_continuous
-        r$async <- future(rchat$chat(rinput,
-          stream = TRUE,
-          stream_file = stream_file,
-          continuous = rcontinuous,
-          api_url = api_url,
-          api_key = api_key,
-          organization = organization,
-          ...
-        ))
-        r$processing <- TRUE
+        historyUI(div_update(r$room$history, openai_logo = openai_logo, user_logo = user_logo))
+        r$refresh <- TRUE
       }
       NULL
     }) %>% bindEvent(input$chat_submit)
@@ -273,25 +263,8 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
       disable("chat_submit")
       disable("chat_regenerate")
       disable("chat_continuous")
-
-      if (inherits(r$async, "Future")) {
-        r$chat <- value(r$async)
-      }
-      writeLines("", stream_file)
-
-      r$messages <- r$messages[-length(r$messages)]
-      rchat <- r$chat
-      rcontinuous <- input$chat_continuous
-      r$async <- future(rchat$regenerate(
-        stream = TRUE,
-        stream_file = stream_file,
-        continuous = rcontinuous,
-        api_url = api_url,
-        api_key = api_key,
-        organization = organization,
-        ...
-      ))
-      r$processing <- TRUE
+      r$room$chat_regenerate(continuous = input$chat_continuous)
+      r$refresh <- TRUE
       NULL
     }) %>% bindEvent(input$chat_regenerate)
 
@@ -299,17 +272,8 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
       enable("chat_submit")
       enable("chat_regenerate")
       enable("chat_continuous")
-
-      if (inherits(r$async, "Future")) {
-        r$async$process$kill()
-        r$text <- paste0(r$text, "[The message was interrupted]")
-        r$messages <- c(r$messages, list(list("role" = "assistant", "content" = r$text, "time" = as.character(Sys.time()))))
-        r$chat$messages <- r$messages
-        r$chat$index <- length(r$chat$messages)
-      }
-      r$async <- NULL
-      r$processing <- FALSE
-      r$stop <- NULL
+      r$room$chat_stop()
+      r$refresh <- TRUE
       NULL
     }) %>% bindEvent(input$chat_stop)
 
@@ -317,86 +281,53 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
       enable("chat_submit")
       enable("chat_regenerate")
       enable("chat_continuous")
-
-      if (inherits(r$async, "Future")) {
-        r$async$process$kill()
-      }
-      r$async <- NULL
-      r$processing <- FALSE
-      r$stop <- NULL
-      r$chat <- ChatGPT$new()
-      r$messages <- NULL
+      r$room$chat_clear()
+      r$refresh <- TRUE
       NULL
     }) %>% bindEvent(input$chat_clear)
 
     observe({
-      if (is.null(r$messages)) {
-        text <- "Welcome to the ChatGPT!\n\nThis is an AI chatbot based on the OpenAI API that can engage in intelligent conversations with you.\n\nPlease enter your questions or topics in the input box below and press \"Send\" button on the right to start chatting with the chatbot.\n\nHave a great time!"
+      r$refresh <- !resolved(r$room$async)
+      # print(rnorm(1))
+      if (is.null(r$room$history)) {
+        r$room$text <- "Welcome to the ChatGPT!\n\nThis is an AI chatbot based on the OpenAI API that can engage in intelligent conversations with you.\n\nPlease enter your questions or topics in the input box below and press \"Send\" button on the right to start chatting with the chatbot.\n\nHave a great time!"
+        historyUI(div_update(r$room$history, openai_logo = openai_logo, user_logo = user_logo))
       } else {
-        if (isTRUE(r$processing)) {
-          r$stop <- div(
+        if (isTRUE(r$refresh)) {
+          disable("chat_submit")
+          disable("chat_regenerate")
+          disable("chat_continuous")
+          invalidateLater(50)
+          stopUI(div(
             div(actionButton("chat_stop", label = "Stop generating", icon = icon("stop"), width = "150px"), style = "text-align: center;"),
             div(style = "height:10px")
-          )
-          invalidateLater(50)
-          text <- readLines(stream_file, warn = FALSE)
-          if (identical(text, "") || length(text) == 0) {
-            text <- "..."
-          }
-          if (identical(text[length(text)], "data: [DONE]") || (resolved(r$async) && !is.null(r$async))) {
-            # print(text)
-            # print(resolved(r$async))
-            # print(value(r$async))
-
-            if (identical(text[length(text)], "data: [DONE]")) {
-              text <- text[-length(text)]
-            }
-            if (inherits(r$async, "Future")) {
-              r$chat <- value(r$async)
-              new_messages <- r$chat$messages[length(r$chat$messages)]
-              new_messages[[1]][["time"]] <- as.character(Sys.time())
-              r$messages <- c(r$messages, new_messages)
-            }
-            r$processing <- FALSE
-            r$stop <- NULL
-            enable("chat_submit")
-            enable("chat_regenerate")
-            enable("chat_continuous")
-          }
+          ))
+          r$room$streaming()
+          outputUI(gsub("\\n$", "", markdown(paste0(r$room$text, collapse = "\n"))))
           # session$sendCustomMessage(type = "scrollCallback", 1)
         } else {
-          text <- r$text
+          enable("chat_submit")
+          enable("chat_regenerate")
+          enable("chat_continuous")
+          stopUI(NULL)
         }
       }
-      # print(text)
-      r$text <- gsub("\\n$", "", markdown(paste0(text, collapse = "\n")))
+      if (isFALSE(r$refresh)) {
+        outputUI(gsub("\\n$", "", markdown(paste0(r$room$text, collapse = "\n"))))
+      }
       NULL
     })
 
     output$chat_output <- renderUI({
-      fluidPage(
-        tagList(
-          tags$head(tags$style(
-            paste0(".chat_input {color:black; background-color: white;
-                    padding: 10px 10px 0 10px; border-radius: 5px; border: 2px solid ", colors["lightchat"], ";
-                    white-space: pre-wrap; overflow-wrap: break-word; display: inline-block;}")
-          )),
-          tags$head(tags$style(
-            paste0(".chat_output {color:black; background-color: white;
-                   padding: 10px 10px 0 10px; border-radius: 5px; border: 2px solid ", colors["darkchat"], ";
-                   white-space: pre-wrap; overflow-wrap: break-word; display: inline-block;}")
-          )),
-          div_create(r$messages, openai_logo = openai_logo, user_logo = user_logo)
-        )
-      )
+      historyUI()
     })
 
     output$chat_output_last <- renderUI({
-      r$text
+      outputUI()
     })
 
     output$chat_stop_ui <- renderUI({
-      r$stop
+      stopUI()
     })
 
     observe({
@@ -420,23 +351,19 @@ ChatGPT_gadget <- function(viewer = NULL, api_url = NULL, api_key = NULL, organi
 #' @import rstudioapi
 #' @export
 #'
-#' @examples
-#' \dontrun{
-#' # Set up OpenAI API endpoint URL and API key
-#' api_url <- "https://api.openai.com"
-#' api_key <- "my-secret-api-key"
-#'
-#' # Start a ChatGPT job
-#' ChatGPT_job(api_url = api_url, api_key = api_key)
-#' }
 #' @seealso
 #' \code{\link{ChatGPT_gadget}} function
 #' @import rstudioapi
+#' @importFrom httr GET
 #' @export
-ChatGPT_job <- function(viewer = "rstudioapi::viewer", api_url = NULL, api_key = NULL, organization = NULL) {
-  api_url <- api_url %||% getOption("openapi_api_url")
-  api_key <- api_key %||% getOption("openapi_api_key")
-  organization <- organization %||% getOption("openapi_organization")
+ChatGPT_job <- function(viewer = rstudioapi::viewer, ...) {
+  args <- as.list(match.call())[-1]
+  api_url <- args[["api_url"]] %||% getOption("openapi_api_url")
+  api_key <- args[["api_key"]] %||% getOption("openapi_api_key")
+  key_nm <- args[["key_nm"]] %||% getOption("openapi_key_nm")
+  organization <- args[["organization"]] %||% getOption("openapi_organization")
+  organization_nm <- args[["organization_nm"]] %||% getOption("openapi_organization_nm")
+
   if (is.null(api_url) || is.null(api_key)) {
     stop("api_url or api_key is not defined, please run the api_setup function to configure them.")
   }
@@ -444,15 +371,13 @@ ChatGPT_job <- function(viewer = "rstudioapi::viewer", api_url = NULL, api_key =
 
   jobscript <- tempfile(fileext = ".R")
   file.create(jobscript)
-  file <- file(jobscript)
   writeLines(
-    text = paste0(
-      "openapi::ChatGPT_gadget(viewer = ", viewer, ",api_url=\"", api_url, "\",api_key=\"", api_key, "\"",
-      if (!is.null(organization)) paste0("\",organization=\"", organization, "\""), ")"
-    ),
+    deparse(substitute(openapi::ChatGPT_gadget(
+      viewer = viewer, api_url = api_url, api_key = api_key, key_nm = key_nm,
+      organization = organization, organization_nm = organization_nm
+    ))),
     con = jobscript
   )
-  close(file)
   jobid <- jobRunScript(path = jobscript, name = "ChatGPT_addin")
   message("ChatGPT job ID : ", jobid)
   return(invisible(NULL))
@@ -467,10 +392,7 @@ quote_selection_to_console <- function() {
     message("No code selected")
     return(invisible(NULL))
   }
-  if (nchar(selected_text) > 3800) {
-
-  }
-  quoted_text <- deparse(selected_text)
+  quoted_text <- deparse(substitute(selected_text))
   sendToConsole(paste0("code <- ", quoted_text), execute = FALSE)
   return(invisible(NULL))
 }

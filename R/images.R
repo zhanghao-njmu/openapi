@@ -22,11 +22,9 @@ create_image <- function(endpoint = "v1/images/generations",
                          size = c("1024x1024", "512x512", "256x256"),
                          response_format = c("url", "b64_json"),
                          user = NULL,
-                         api_url = NULL,
-                         api_key = NULL,
-                         organization = NULL,
                          max_tries = 1,
-                         timeout = 300) {
+                         timeout = 300,
+                         ...) {
   size <- match.arg(size)
   response_format <- match.arg(response_format)
 
@@ -41,11 +39,9 @@ create_image <- function(endpoint = "v1/images/generations",
     method = "POST",
     endpoint = endpoint,
     data = data,
-    api_url = api_url,
-    api_key = api_key,
-    organization = organization,
     max_tries = max_tries,
-    timeout = timeout
+    timeout = timeout,
+    ...
   )
   return(parse_response(response, ImagesResponse))
 }
@@ -78,11 +74,9 @@ create_image_edit <- function(endpoint = "v1/images/edits",
                               size = c("1024x1024", "512x512", "256x256"),
                               response_format = c("url", "b64_json"),
                               user = NULL,
-                              api_url = NULL,
-                              api_key = NULL,
-                              organization = NULL,
                               max_tries = 1,
-                              timeout = 300) {
+                              timeout = 300,
+                              ...) {
   size <- match.arg(size)
   response_format <- match.arg(response_format)
 
@@ -103,11 +97,9 @@ create_image_edit <- function(endpoint = "v1/images/edits",
     data = data,
     encode = "multipart",
     post_type = "multipart/form-data",
-    api_url = api_url,
-    api_key = api_key,
-    organization = organization,
     max_tries = max_tries,
-    timeout = timeout
+    timeout = timeout,
+    ...
   )
   return(parse_response(response, ImagesResponse))
 }
@@ -136,11 +128,9 @@ create_image_variation <- function(endpoint = "v1/images/variations ",
                                    size = c("1024x1024", "512x512", "256x256"),
                                    response_format = c("url", "b64_json"),
                                    user = NULL,
-                                   api_url = NULL,
-                                   api_key = NULL,
-                                   organization = NULL,
                                    max_tries = 1,
-                                   timeout = 300) {
+                                   timeout = 300,
+                                   ...) {
   size <- match.arg(size)
   response_format <- match.arg(response_format)
 
@@ -157,11 +147,9 @@ create_image_variation <- function(endpoint = "v1/images/variations ",
     data = data,
     encode = "multipart",
     post_type = "multipart/form-data",
-    api_url = api_url,
-    api_key = api_key,
-    organization = organization,
     max_tries = max_tries,
-    timeout = timeout
+    timeout = timeout,
+    ...
   )
   return(parse_response(response, ImagesResponse))
 }

@@ -4,27 +4,20 @@
 \alias{list_files}
 \title{List Files}
 \usage{
-list_files(
-  endpoint = "v1/files",
-  api_url = "https://api.openai.com",
-  api_key = NULL,
-  organization = NULL,
-  max_tries = 1,
-  timeout = 300
-)
+list_files(endpoint = "v1/files", max_tries = 1, timeout = 300, ...)
 }
 \arguments{
 \item{endpoint}{The API endpoint. Default is "v1/files".}
+
+\item{max_tries}{The maximum number of times to attempt the API call (default: 1)}
+
+\item{timeout}{The timeout value for the API call in seconds (default: 300)}
 
 \item{api_url}{The URL of the OpenAI API (default: NULL)}
 
 \item{api_key}{The API key for accessing the OpenAI API (default: NULL)}
 
 \item{organization}{The organization associated with the API key (default: NULL)}
-
-\item{max_tries}{The maximum number of times to attempt the API call (default: 1)}
-
-\item{timeout}{The timeout value for the API call in seconds (default: 300)}
 }
 \description{
 A function to list files from an API endpoint.

@@ -39,7 +39,7 @@ compare_text <- function(text1, text2) {
 #'
 #' @export
 #'
-code_edit <- function(code, prompt, instruction, explain = getOption("openapi_explain") %||% TRUE, simplify = getOption("openapi_simplify") %||% TRUE, ...) {
+code_edit <- function(code, prompt, instruction, explain = TRUE, simplify = TRUE, ...) {
   if (isTRUE(explain)) {
     instruction <- paste0(instruction, " The output should be in standard R code format with the explanation.")
   } else {
@@ -72,7 +72,7 @@ code_edit <- function(code, prompt, instruction, explain = getOption("openapi_ex
 #' @return A \code{\link{TextEditing-class}} object
 #'
 #' @export
-code_document <- function(code, additional_instructions = getOption("openapi_additional_instructions"), explain = getOption("openapi_explain") %||% TRUE, simplify = getOption("openapi_simplify") %||% TRUE, ...) {
+code_document <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
   prompt <- prompts[prompts[["act"]] == "R Package Development Assistant", "prompt"]
   instruction <- paste0(
     "Generate complete roxygen2 documentation for R code, including title, description, parameters, returns, examples, and more.",
@@ -91,7 +91,7 @@ code_document <- function(code, additional_instructions = getOption("openapi_add
 #' @return A \code{\link{TextEditing-class}} object
 #'
 #' @export
-code_check <- function(code, additional_instructions = getOption("openapi_additional_instructions"), explain = getOption("openapi_explain") %||% TRUE, simplify = getOption("openapi_simplify") %||% TRUE, ...) {
+code_check <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
   prompt <- prompts[prompts[["act"]] == "R Package Development Assistant", "prompt"]
   instruction <- paste0(
     "Check if there are any issues or bugs with the following R code.",
@@ -110,7 +110,7 @@ code_check <- function(code, additional_instructions = getOption("openapi_additi
 #' @return A \code{\link{TextEditing-class}} object
 #'
 #' @export
-code_improve <- function(code, additional_instructions = getOption("openapi_additional_instructions"), explain = getOption("openapi_explain") %||% TRUE, simplify = getOption("openapi_simplify") %||% TRUE, ...) {
+code_improve <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
   prompt <- prompts[prompts[["act"]] == "R Package Development Assistant", "prompt"]
   instruction <- paste0(
     "Rewrite the following R code to improve its efficiency.",
@@ -127,7 +127,7 @@ code_improve <- function(code, additional_instructions = getOption("openapi_addi
 #' @return A \code{\link{TextEditing-class}} object
 #'
 #' @export
-code_comment <- function(code, additional_instructions = getOption("openapi_additional_instructions"), explain = getOption("openapi_explain") %||% TRUE, simplify = getOption("openapi_simplify") %||% TRUE, ...) {
+code_comment <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
   prompt <- prompts[prompts[["act"]] == "R Package Development Assistant", "prompt"]
   instruction <- paste0(
     "Add inline comments to the following R code to improve its readability.",
@@ -146,7 +146,7 @@ code_comment <- function(code, additional_instructions = getOption("openapi_addi
 #' @return A \code{\link{TextEditing-class}} object
 #'
 #' @export
-code_refactor <- function(code, additional_instructions = getOption("openapi_additional_instructions"), explain = getOption("openapi_explain") %||% TRUE, simplify = getOption("openapi_simplify") %||% TRUE, ...) {
+code_refactor <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
   prompt <- prompts[prompts[["act"]] == "R Package Development Assistant", "prompt"]
   instruction <- paste0(
     "Review the following R code and refactor it to improve its efficiency and readability.",
@@ -165,7 +165,7 @@ code_refactor <- function(code, additional_instructions = getOption("openapi_add
 #' @return A \code{\link{TextEditing-class}} object
 #'
 #' @export
-code_explain <- function(code, additional_instructions = getOption("openapi_additional_instructions"), explain = getOption("openapi_explain") %||% TRUE, simplify = getOption("openapi_simplify") %||% TRUE, ...) {
+code_explain <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
   prompt <- prompts[prompts[["act"]] == "R Package Development Assistant", "prompt"]
   instruction <- paste0(
     "Review the following R code and provide an explanation of how it works.",
@@ -184,7 +184,7 @@ code_explain <- function(code, additional_instructions = getOption("openapi_addi
 #' @return A \code{\link{TextEditing-class}} object
 #'
 #' @export
-code_create_test <- function(code, additional_instructions = getOption("openapi_additional_instructions"), explain = getOption("openapi_explain") %||% TRUE, simplify = getOption("openapi_simplify") %||% TRUE, ...) {
+code_create_test <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
   prompt <- prompts[prompts[["act"]] == "R Package Development Assistant", "prompt"]
   instruction <- paste0(
     "Generate test units for the following R code using the testthat 3e package.",

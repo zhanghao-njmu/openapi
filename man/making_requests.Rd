@@ -2,7 +2,7 @@
 % Please edit documentation in R/making_requests.R
 \name{making_requests}
 \alias{making_requests}
-\title{Making Requests Function}
+\title{Make HTTP requests to the API endpoint}
 \usage{
 making_requests(
   method = c("POST", "GET", "DELETE"),
@@ -17,45 +17,51 @@ making_requests(
   api_url = NULL,
   api_key = NULL,
   organization = NULL,
+  key_nm = NULL,
+  organization_nm = NULL,
   max_tries = 1,
   timeout = 300,
   debug = FALSE
 )
 }
 \arguments{
-\item{method}{A character string indicating the http method to be used (default is "POST").}
+\item{method}{Character string, defaults to "POST". The HTTP Method (POST, GET, DELETE) to use in making the request.}
 
-\item{endpoint}{A character string indicating the endpoint to which the request should be sent (default is "v1/chat/completions").}
+\item{endpoint}{A character string to indicate the target URL endpoint.}
 
-\item{data}{A list object containing the data to be sent with the request (default is NULL).}
+\item{data}{A named list or an object that can be serialized to JSON containing the input data to send/request to/from the endpoint.}
 
-\item{encode}{A character string specifying the encoding type for the data to be sent (default is "json").}
+\item{encode}{A character string, defaults to "json". The encoding to use in packaging the text to be sent to the server.}
 
-\item{stream}{A logical value indicating whether the response should be streamed or not (default is FALSE).}
+\item{stream}{A logical flag indicating whether to stream the content or not. It defaults to \code{FALSE}.}
 
-\item{stream_type}{A character string specifying the type of stream content to expect in the response (default is "completion").}
+\item{stream_type}{A character string, defaults to "completion". Indicates the type of data to be sent when streaming, either \code{"completion"} or \code{"chat_completion"}.}
 
-\item{stream_file}{A character string indicating the file path to save the streamed content to (default is NULL).}
+\item{stream_file}{A character string indicating the name and path of a file to write the response data to.}
 
-\item{post_type}{A character string specifying the content type of the request body (default is "application/json").}
+\item{post_type}{A character string, defaults to "application/json". Indicates the MIME type to be used as the content type of the request stream.}
 
-\item{response_type}{A character string specifying the content type of the response body (default is "application/json").}
+\item{response_type}{A character string, defaults to "application/json". Indicates the MIME type to be used as the content type of the server response.}
 
-\item{api_url}{A character string indicating the OpenAI API endpoint URL (default is NULL).}
+\item{api_url}{A character string indicating the URL for the server endpoint.}
 
-\item{api_key}{A character string indicating the user's API key (default is NULL).}
+\item{api_key}{A character string indicating the API key to use for authentication.}
 
-\item{organization}{A character string indicating the name of the OpenAI organization being accessed (default is NULL).}
+\item{organization}{A character string indicating the organization ID to use for authentication.}
 
-\item{max_tries}{An integer specifying the maximum number of tries allowed for a given request before an error is thrown (default is 1).}
+\item{key_nm}{A character string indicating the name of the authentication key in the headers.}
 
-\item{timeout}{An integer specifying the timeout window for the request in seconds (default is 300).}
+\item{organization_nm}{A character string indicating the name of the organization ID key in the headers.}
 
-\item{debug}{A logical value indicating whether debug mode should be initiated (default is FALSE).}
+\item{max_tries}{An integer, defaults to 1. The maximum number of times to try making the request before outputting an error.}
+
+\item{timeout}{An integer, defaults to 300 seconds. The maximum time in seconds allowed for making the request.}
+
+\item{debug}{A logical flag indicating whether to print debugging output or not. Defaults to \code{FALSE}.}
 }
 \value{
-A response object containing the http status code and response content.
+A response object returned by the server endpoint.
 }
 \description{
-This function allows users to make requests to OpenAI's API endpoint using various http methods.
+This function helps in making HTTP requests to the OpenAI API endpoint. It sends the encoded data provided to it and sets up headers including the authentication header to use in making the authentication. It tries to make the request multiple times based on the supplied values for the \code{max_tries} argument. It also provides functionality for streaming data and writing it to file.
 }

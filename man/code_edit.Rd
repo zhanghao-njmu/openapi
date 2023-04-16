@@ -4,14 +4,7 @@
 \alias{code_edit}
 \title{Edit R code with a user prompt and system message}
 \usage{
-code_edit(
-  code,
-  prompt,
-  instruction,
-  explain = getOption("openapi_explain") \%||\% TRUE,
-  simplify = getOption("openapi_simplify") \%||\% TRUE,
-  ...
-)
+code_edit(code, prompt, instruction, explain = TRUE, simplify = TRUE, ...)
 }
 \arguments{
 \item{code}{R code to be edited}

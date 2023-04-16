@@ -1,24 +1,26 @@
-#' Making Requests Function
+#' Make HTTP requests to the API endpoint
 #'
-#' This function allows users to make requests to OpenAI's API endpoint using various http methods.
+#' This function helps in making HTTP requests to the OpenAI API endpoint. It sends the encoded data provided to it and sets up headers including the authentication header to use in making the authentication. It tries to make the request multiple times based on the supplied values for the \code{max_tries} argument. It also provides functionality for streaming data and writing it to file.
 #'
-#' @param method A character string indicating the http method to be used (default is "POST").
-#' @param endpoint A character string indicating the endpoint to which the request should be sent (default is "v1/chat/completions").
-#' @param data A list object containing the data to be sent with the request (default is NULL).
-#' @param encode A character string specifying the encoding type for the data to be sent (default is "json").
-#' @param stream A logical value indicating whether the response should be streamed or not (default is FALSE).
-#' @param stream_type A character string specifying the type of stream content to expect in the response (default is "completion").
-#' @param stream_file A character string indicating the file path to save the streamed content to (default is NULL).
-#' @param post_type A character string specifying the content type of the request body (default is "application/json").
-#' @param response_type A character string specifying the content type of the response body (default is "application/json").
-#' @param api_url A character string indicating the OpenAI API endpoint URL (default is NULL).
-#' @param api_key A character string indicating the user's API key (default is NULL).
-#' @param organization A character string indicating the name of the OpenAI organization being accessed (default is NULL).
-#' @param max_tries An integer specifying the maximum number of tries allowed for a given request before an error is thrown (default is 1).
-#' @param timeout An integer specifying the timeout window for the request in seconds (default is 300).
-#' @param debug A logical value indicating whether debug mode should be initiated (default is FALSE).
+#' @param method Character string, defaults to "POST". The HTTP Method (POST, GET, DELETE) to use in making the request.
+#' @param endpoint A character string to indicate the target URL endpoint.
+#' @param data A named list or an object that can be serialized to JSON containing the input data to send/request to/from the endpoint.
+#' @param encode A character string, defaults to "json". The encoding to use in packaging the text to be sent to the server.
+#' @param stream A logical flag indicating whether to stream the content or not. It defaults to \code{FALSE}.
+#' @param stream_type A character string, defaults to "completion". Indicates the type of data to be sent when streaming, either \code{"completion"} or \code{"chat_completion"}.
+#' @param stream_file A character string indicating the name and path of a file to write the response data to.
+#' @param post_type A character string, defaults to "application/json". Indicates the MIME type to be used as the content type of the request stream.
+#' @param response_type A character string, defaults to "application/json". Indicates the MIME type to be used as the content type of the server response.
+#' @param api_url A character string indicating the URL for the server endpoint.
+#' @param api_key A character string indicating the API key to use for authentication.
+#' @param organization A character string indicating the organization ID to use for authentication.
+#' @param key_nm A character string indicating the name of the authentication key in the headers.
+#' @param organization_nm A character string indicating the name of the organization ID key in the headers.
+#' @param max_tries An integer, defaults to 1. The maximum number of times to try making the request before outputting an error.
+#' @param timeout An integer, defaults to 300 seconds. The maximum time in seconds allowed for making the request.
+#' @param debug A logical flag indicating whether to print debugging output or not. Defaults to \code{FALSE}.
 #'
-#' @return A response object containing the http status code and response content.
+#' @return A response object returned by the server endpoint.
 #'
 #' @importFrom httr POST GET DELETE content add_headers timeout
 #' @importFrom RCurl curlPerform
@@ -28,13 +30,15 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
                             data = NULL, encode = "json",
                             stream = FALSE, stream_type = c("completion", "chat_completion"), stream_file = NULL,
                             post_type = "application/json", response_type = "application/json",
-                            api_url = NULL, api_key = NULL, organization = NULL,
+                            api_url = NULL, api_key = NULL, organization = NULL, key_nm = NULL, organization_nm = NULL,
                             max_tries = 1, timeout = 300, debug = FALSE) {
   method <- match.arg(method)
   stream_type <- match.arg(stream_type)
   api_url <- api_url %||% getOption("openapi_api_url")
   api_key <- api_key %||% getOption("openapi_api_key")
+  key_nm <- key_nm %||% getOption("openapi_key_nm")
   organization <- organization %||% getOption("openapi_organization")
+  organization_nm <- organization_nm %||% getOption("openapi_organization_nm")
   if (is.null(api_url) || is.null(api_key)) {
     stop("api_url or api_key is not defined, please run the api_setup function to configure them.")
   }
@@ -42,10 +46,10 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
 
   headers <- add_headers("Content-Type" = post_type)
   if (!is.null(api_key)) {
-    headers[["headers"]]["Authorization"] <- paste("Bearer", api_key)
+    headers[["headers"]][key_nm] <- api_key
   }
   if (!is.null(organization)) {
-    headers[["headers"]]["OpenAI-Organization"] <- organization
+    headers[["headers"]][organization_nm] <- organization
   }
   if (!is.null(data)) {
     args <- list(url = url, headers, body = data, encode = encode)
@@ -58,7 +62,8 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
     stream_content <- NULL
     stream_residual <- NULL
     if (!is.null(stream_file)) {
-      file.create(stream_file)
+      dir.create(dirname(stream_file), recursive = TRUE, showWarnings = FALSE)
+      file.create(stream_file, showWarnings = TRUE)
     }
     stream_fun <- function(x) {
       split_content <- strsplit(ifelse(grepl("^data:", x), x, paste0(stream_residual, x)), "\n\n")[[1]]

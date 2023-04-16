@@ -14,18 +14,21 @@
 #'
 #' @examples
 #' \dontrun{
-#' api_setup(
-#'   api_url = "https://api.openai.com/v1/",
-#'   api_key = "YOUR_API_KEY",
-#'   organization = "YOUR_ORGANIZATION_NAME"
-#' )
+#' ## Official OpenAI API
+#' api_url <- "https://api.openai.com"
+#' api_key <- "Bearer sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#' api_setup(api_url = api_url, api_key = api_key)
+#'
+#' ## Azure OpenAI API
+#' api_url <- "https://xxxxxx.openai.azure.com"
+#' api_key <- "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#' api_setup(api_url = api_url, api_key = api_key, key_nm = "api-key")
 #' }
 #' @export
 #' @importFrom httr GET
-api_setup <- function(api_url = "https://api.openai.com", api_key = NULL, organization = NULL, check_url = TRUE) {
-  api_url <- api_url %||% getOption("openapi_api_url")
-  api_key <- api_key %||% getOption("openapi_api_key")
-  openapi_organization <- organization %||% getOption("openapi_organization")
+api_setup <- function(api_url = "https://api.openai.com", api_key = NULL, organization = NULL,
+                      key_nm = "Authorization", organization_nm = "OpenAI-Organization",
+                      endpoint = NULL, check_url = TRUE) {
   if (is.null(api_url)) {
     stop("Please specify the API URL.")
   }
@@ -34,7 +37,12 @@ api_setup <- function(api_url = "https://api.openai.com", api_key = NULL, organi
   }
   options(openapi_api_url = api_url)
   options(openapi_api_key = api_key)
+  options(openapi_key_nm = key_nm)
   options(openapi_organization = organization)
+  options(openapi_organization_nm = organization_nm)
+  if (!is.null(endpoint)) {
+    options(openapi_endpoint = endpoint)
+  }
   if (isTRUE(check_url)) {
     try_get(GET(api_url), error_message = paste0("Unable to establish a connection with api_url: ", api_url))
   }
@@ -263,7 +271,8 @@ truncate_text <- function(text, max_length = 50) {
 #' @return A data frame containing the chat prompts in the specified language.
 #' @export
 #' @examples
-#' fetch_prompts(language = "en")
+#' prompts <- fetch_prompts(language = "en")
+#' head(prompts)
 #'
 #' @export
 fetch_prompts <- function(language = c("en", "zh")) {
