@@ -12,11 +12,9 @@ create_transcription(
   response_format = c("json", "text", "srt", "verbose_json", "vtt"),
   temperature = 0,
   language = NULL,
-  api_url = NULL,
-  api_key = NULL,
-  organization = NULL,
   max_tries = 1,
-  timeout = 300
+  timeout = 300,
+  ...
 )
 }
 \arguments{
@@ -35,15 +33,15 @@ create_transcription(
 \item{language}{the language code of the audio if known. Currently this parameter
 only supports English ("en") or Mandarin ("zh") (default NULL)}
 
+\item{max_tries}{the maximum number of times to try the request if there are connection errors (default 1).}
+
+\item{timeout}{maximum time to wait for a reponse (default 300).}
+
 \item{api_url}{base URL for the OpenAI API (default NULL).}
 
 \item{api_key}{An API Key is required to use this tool.}
 
 \item{organization}{Optional organization slug required for use with OpenAI API.}
-
-\item{max_tries}{the maximum number of times to try the request if there are connection errors (default 1).}
-
-\item{timeout}{maximum time to wait for a reponse (default 300).}
 }
 \value{
 An object of class "AudioResponse".

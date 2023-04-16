@@ -4,24 +4,10 @@
 \alias{ChatGPT_gadget}
 \title{A Shiny Gadget for AI Chatbot based on OpenAI API}
 \usage{
-ChatGPT_gadget(
-  viewer = NULL,
-  api_url = NULL,
-  api_key = NULL,
-  organization = NULL,
-  ...
-)
+ChatGPT_gadget(viewer = NULL, ...)
 }
 \arguments{
 \item{viewer}{A viewer pane to use for displaying the gadget (defaults to paneViewer(minHeight = 300)).}
-
-\item{api_url}{The URL of the OpenAI API.}
-
-\item{api_key}{The API key to access the OpenAI API.}
-
-\item{organization}{The ID of the organization used to access the OpenAI API.}
-
-\item{...}{Additional arguments to pass to the ChatGPT class constructor.}
 }
 \description{
 This function generates a Shiny Gadget for an AI Chatbot based on the OpenAI API. The user can interact with the chatbot using prompts/questions and receive intelligent responses.

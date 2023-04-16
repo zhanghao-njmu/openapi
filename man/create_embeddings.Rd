@@ -9,11 +9,9 @@ create_embeddings(
   model = "text-embedding-ada-002",
   input,
   user = NULL,
-  api_url = NULL,
-  api_key = NULL,
-  organization = NULL,
   max_tries = 1,
-  timeout = 300
+  timeout = 300,
+  ...
 )
 }
 \arguments{
@@ -25,15 +23,15 @@ create_embeddings(
 
 \item{user}{Optional user identifier.}
 
+\item{max_tries}{Maximum number of attempts to make the API request in case of failure. Default: 1.}
+
+\item{timeout}{Timeout in seconds for the API request. Default: 300.}
+
 \item{api_url}{The OpenAI API URL. Default: NULL.}
 
 \item{api_key}{Optional API key for authentication.}
 
 \item{organization}{Optional organization identifier.}
-
-\item{max_tries}{Maximum number of attempts to make the API request in case of failure. Default: 1.}
-
-\item{timeout}{Timeout in seconds for the API request. Default: 300.}
 }
 \value{
 An object of class "EmbeddingsResponse".

@@ -240,10 +240,11 @@ ChatGPT <- R6Class(
   classname = "ChatGPT",
   public = list(
     messages = NULL,
-    act_as = NULL,
+    initial = list(),
     latest_response = NULL,
     index = NULL,
-    initialize = function(act_as = NULL, messages = NULL) {
+    chat_params = list(),
+    initialize = function(act_as = NULL, messages = NULL, chat_params = list()) {
       if (!is.null(act_as)) {
         matched <- agrep(pattern = act_as, x = prompts[["act"]], max.distance = 0.1, ignore.case = TRUE)
         if (length(matched) > 0) {
@@ -267,12 +268,11 @@ ChatGPT <- R6Class(
       } else if (!is.null(messages)) {
         self$messages <- lapply(messages, function(x) list("role" = x[["role"]], "content" = x[["content"]]))
       }
+      self$initial <- list(act_as = act_as, messages = messages)
+      self$chat_params <- chat_params
       invisible(self)
     },
-    chat = function(prompt = NULL, role = "user",
-                    stream = getOption("openapi_stream") %||% TRUE,
-                    continuous = getOption("openapi_continuous") %||% TRUE,
-                    ...) {
+    chat = function(prompt = NULL, role = "user", continuous = TRUE) {
       if (!is.null(prompt)) {
         messages <- list(
           list(
@@ -283,7 +283,9 @@ ChatGPT <- R6Class(
         if (isTRUE(continuous)) {
           messages <- c(lapply(self$messages, function(x) list("role" = x[["role"]], "content" = x[["content"]])), messages)
         }
-        resp <- create_chat_completion(messages = messages, stream = stream, ...)
+        chat_params <- self$chat_params
+        chat_params[["messages"]] <- messages
+        resp <- do.call(openapi::create_chat_completion, chat_params)
         self$latest_response <- resp
         if (inherits(resp, "CompletionResponse")) {
           all_messages <- c(
@@ -309,9 +311,7 @@ ChatGPT <- R6Class(
       }
       invisible(self)
     },
-    regenerate = function(stream = getOption("openapi_stream") %||% TRUE,
-                          continuous = getOption("openapi_continuous") %||% TRUE,
-                          ...) {
+    regenerate = function(continuous = TRUE) {
       if (length(self$messages) > 1) {
         self$messages <- self$messages[1:(self$index - 1)]
         if (!identical(self$messages[[length(self$messages)]][["role"]], "user")) {
@@ -323,7 +323,9 @@ ChatGPT <- R6Class(
             messages <- self$messages[length(self$messages)]
           }
           messages <- lapply(self$messages, function(x) list("role" = x[["role"]], "content" = x[["content"]]))
-          resp <- create_chat_completion(messages = messages, stream = stream, ...)
+          chat_params <- self$chat_params
+          chat_params[["messages"]] <- messages
+          resp <- do.call(openapi::create_chat_completion, chat_params)
           self$latest_response <- resp
           if (inherits(resp, "CompletionResponse")) {
             all_messages <- c(
@@ -379,6 +381,161 @@ ChatGPT <- R6Class(
   )
 )
 
+# ChatRoom ----------------------------------------------------------------------------------
+#' @importFrom future plan future value resolved
+#' @importFrom future.callr callr
+#' @export
+ChatRoom <- R6Class(
+  classname = "ChatRoom",
+  public = list(
+    chat = NULL,
+    stream_file = NULL,
+    history = NULL,
+    text = NULL,
+    async = NULL,
+    initialize = function(act_as = NULL, messages = NULL, chat_params = list(), stream_file = tempfile(fileext = ".streamfile.txt")) {
+      plan(callr)
+
+      chat_params[["api_url"]] <- chat_params[["api_url"]] %||% getOption("openapi_api_url")
+      chat_params[["api_key"]] <- chat_params[["api_key"]] %||% getOption("openapi_api_key")
+      chat_params[["key_nm"]] <- chat_params[["key_nm"]] %||% getOption("openapi_key_nm")
+      chat_params[["organization"]] <- chat_params[["organization"]] %||% getOption("openapi_organization")
+      chat_params[["organization_nm"]] <- chat_params[["organization_nm"]] %||% getOption("openapi_organization_nm")
+
+      if (is.null(chat_params[["api_url"]]) || is.null(chat_params[["api_key"]])) {
+        stop("api_url or api_key is not defined, please run the api_setup function to configure them.")
+      }
+
+      if (!file.exists(stream_file)) {
+        dir.create(dirname(stream_file), recursive = TRUE, showWarnings = FALSE)
+        file.create(stream_file, showWarnings = TRUE)
+      }
+      chat_params[["stream"]] <- TRUE
+      chat_params[["stream_file"]] <- stream_file
+      chat <- ChatGPT$new(act_as = act_as, messages = messages, chat_params = chat_params)
+      self$history <- messages
+      self$chat <- chat
+      self$stream_file <- stream_file
+      invisible(self)
+    },
+    chat_submit = function(prompt = NULL, role = "user", continuous = TRUE) {
+      self$history <- c(self$history, list(list("role" = role, "content" = prompt, "time" = as.character(Sys.time()))))
+      writeLines("", self$stream_file)
+      chatgpt <- self$chat
+      self$async <- future(chatgpt$chat(prompt, continuous = continuous), seed = NULL)
+      invisible(self)
+    },
+    chat_regenerate = function(continuous = TRUE) {
+      if (inherits(self$async, "Future")) {
+        self$chat <- value(self$async)
+      }
+      self$history <- self$history[-length(self$history)]
+      writeLines("", self$stream_file)
+      chatgpt <- self$chat
+      self$async <- future(chatgpt$regenerate(continuous = continuous), seed = NULL)
+      invisible(self)
+    },
+    chat_stop = function() {
+      if (inherits(self$async, "Future")) {
+        self$async$process$kill()
+        self$text <- paste0(self$text, "[The message was interrupted]")
+        self$history <- c(self$history, list(list("role" = "assistant", "content" = self$text, "time" = as.character(Sys.time()))))
+        self$chat$messages <- self$history
+        self$chat$index <- length(self$chat$messages)
+      }
+      self$async <- NULL
+      invisible(self)
+    },
+    chat_clear = function() {
+      if (inherits(self$async, "Future")) {
+        self$async$process$kill()
+      }
+      self$async <- NULL
+      self$chat <- ChatGPT$new(act_as = self$chat$initial$act_as, messages = self$chat$initial$messages, chat_params = self$chat$chat_params)
+      self$history <- NULL
+    },
+    streaming = function() {
+      text <- readLines(self$stream_file, warn = FALSE)
+      if (identical(text, "") || length(text) == 0) {
+        text <- "..."
+      }
+      if (identical(text[length(text)], "data: [DONE]") || (resolved(self$async) && !is.null(self$async))) {
+        if (identical(text[length(text)], "data: [DONE]")) {
+          text <- text[-length(text)]
+        }
+        if (inherits(self$async, "Future")) {
+          self$chat <- value(self$async)
+          new_messages <- self$chat$messages[length(self$chat$messages)]
+          new_messages[[1]][["time"]] <- as.character(Sys.time())
+          self$history <- c(self$history, new_messages)
+          self$async <- NULL
+        }
+      }
+      self$text <- text
+      invisible(self)
+    }
+  )
+)
+
+
+# ChatRooms ----------------------------------------------------------------------------------
+#' @export
+ChatRooms <- R6Class(
+  classname = "ChatRooms",
+  public = list(
+    current = NULL,
+    rooms = NULL,
+    initialize = function(name = NULL, ...) {
+      if (is.null(name)) {
+        name <- "room1"
+      }
+      self$rooms[[name]] <- ChatRoom$new(...)
+      self$current <- name
+      invisible(self)
+    },
+    room_add = function(name = NULL, ...) {
+      if (is.null(name)) {
+        n <- gsub("(^room)(\\d+)", "\\2", grep("(^room)(\\d+)", names(self$rooms), value = TRUE))
+        if (length(n) > 0) {
+          name <- paste0("room", max(max(as.numeric(n), na.rm = TRUE) + 1, 1))
+        } else {
+          name <- "room1"
+        }
+      }
+      self$rooms[[name]] <- ChatRoom$new(...)
+      self$current <- name
+      invisible(self)
+    },
+    room_remove = function(name = NULL) {
+      if (is.null(name)) {
+        if (self$current %in% names(self$rooms)) {
+          name <- self$current
+        } else {
+          name <- names(self$rooms)[length(self$rooms)]
+        }
+      }
+      stream_file <- self$rooms[[name]]$stream_file
+      message("Remove stream file: ", stream_file)
+      unlink(stream_file)
+      self$rooms[[name]] <- NULL
+      if (identical(self$current, name)) {
+        self$current <- names(self$rooms)[length(self$rooms)]
+      }
+      invisible(self)
+    },
+    room_current = function(name = NULL) {
+      if (is.null(name)) {
+        if (self$current %in% names(self$rooms)) {
+          name <- self$current
+        } else {
+          name <- names(self$rooms)[length(self$rooms)]
+        }
+      }
+      self$rooms[[name]]
+    }
+  )
+)
+
 # TextEditing ----------------------------------------------------------------------------------
 #' TextEditing
 #' An R6Class for text editing
@@ -391,7 +548,7 @@ TextEditing <- R6Class("TextEditing",
     output = NULL,
     difference = NULL,
     fields = c("input", "output", "difference"),
-    initialize = function(input = NULL, response) {
+    initialize = function(response, input = NULL) {
       self$response <- response
       if (inherits(self$response, "CompletionResponse")) {
         object <- self$response$extract("object")

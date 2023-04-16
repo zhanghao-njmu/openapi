@@ -11,11 +11,9 @@ create_translation(
   prompt = NULL,
   response_format = c("json", "text", "srt", "verbose_json", "vtt"),
   temperature = 0,
-  api_url = NULL,
-  api_key = NULL,
-  organization = NULL,
   max_tries = 1,
-  timeout = 300
+  timeout = 300,
+  ...
 )
 }
 \arguments{
@@ -31,15 +29,15 @@ create_translation(
 
 \item{temperature}{A numeric value indicating the degree of randomness in the model's output (default is 0).}
 
+\item{max_tries}{An integer value indicating the maximum number of attempts to make the API call (default is 1).}
+
+\item{timeout}{A numeric value indicating the timeout limit in seconds for the API call (default is 300).}
+
 \item{api_url}{A string indicating the base URL of the OpenAI API (default is NULL).}
 
 \item{api_key}{A string indicating the authentication key to use for requests (default is NULL).}
 
 \item{organization}{A string indicating the organization ID (default is NULL).}
-
-\item{max_tries}{An integer value indicating the maximum number of attempts to make the API call (default is 1).}
-
-\item{timeout}{A numeric value indicating the timeout limit in seconds for the API call (default is 300).}
 }
 \value{
 An object of class "AudioResponse".

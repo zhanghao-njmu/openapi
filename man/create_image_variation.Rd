@@ -11,11 +11,9 @@ create_image_variation(
   size = c("1024x1024", "512x512", "256x256"),
   response_format = c("url", "b64_json"),
   user = NULL,
-  api_url = NULL,
-  api_key = NULL,
-  organization = NULL,
   max_tries = 1,
-  timeout = 300
+  timeout = 300,
+  ...
 )
 }
 \arguments{
@@ -31,15 +29,15 @@ create_image_variation(
 
 \item{user}{The user making the request (default is NULL).}
 
+\item{max_tries}{The maximum number of times to try the request (default is 1).}
+
+\item{timeout}{The timeout for the request in seconds (default is 300).}
+
 \item{api_url}{The URL of the API (default is NULL).}
 
 \item{api_key}{The API key to use for authentication (default is NULL).}
 
 \item{organization}{The organization making the request (default is NULL).}
-
-\item{max_tries}{The maximum number of times to try the request (default is 1).}
-
-\item{timeout}{The timeout for the request in seconds (default is 300).}
 }
 \value{
 An object of class "ImagesResponse".

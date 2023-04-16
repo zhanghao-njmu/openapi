@@ -16,6 +16,7 @@ A data frame containing the chat prompts in the specified language.
 This function fetches chat prompts from Github for various languages.
 }
 \examples{
-fetch_prompts(language = "en")
+prompts <- fetch_prompts(language = "en")
+head(prompts)
 
 }

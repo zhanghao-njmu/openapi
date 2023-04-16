@@ -13,11 +13,9 @@ create_image_edit(
   size = c("1024x1024", "512x512", "256x256"),
   response_format = c("url", "b64_json"),
   user = NULL,
-  api_url = NULL,
-  api_key = NULL,
-  organization = NULL,
   max_tries = 1,
-  timeout = 300
+  timeout = 300,
+  ...
 )
 }
 \arguments{
@@ -37,15 +35,15 @@ create_image_edit(
 
 \item{user}{user the request is associated with, if any.}
 
+\item{max_tries}{Maximum number of tries to make request.}
+
+\item{timeout}{Maximum time to wait for response.}
+
 \item{api_url}{The API URL to query. The default value is "https://api.openai.com".}
 
 \item{api_key}{Authentication key for API.}
 
 \item{organization}{The name of the organization to use with this request. \code{api_key} must have permission to use this organization.}
-
-\item{max_tries}{Maximum number of tries to make request.}
-
-\item{timeout}{Maximum time to wait for response.}
 }
 \value{
 An object of class "ImagesResponse".

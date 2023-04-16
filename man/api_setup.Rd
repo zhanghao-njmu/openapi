@@ -8,6 +8,9 @@ api_setup(
   api_url = "https://api.openai.com",
   api_key = NULL,
   organization = NULL,
+  key_nm = "Authorization",
+  organization_nm = "OpenAI-Organization",
+  endpoint = NULL,
   check_url = TRUE
 )
 }
@@ -28,10 +31,14 @@ This function sets up the API URL, API key, and organization for OpenAI's servic
 }
 \examples{
 \dontrun{
-api_setup(
-  api_url = "https://api.openai.com/v1/",
-  api_key = "YOUR_API_KEY",
-  organization = "YOUR_ORGANIZATION_NAME"
-)
+## Official OpenAI API
+api_url <- "https://api.openai.com"
+api_key <- "Bearer sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+api_setup(api_url = api_url, api_key = api_key)
+
+## Azure OpenAI API
+api_url <- "https://xxxxxx.openai.azure.com"
+api_key <- "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+api_setup(api_url = api_url, api_key = api_key, key_nm = "api-key")
 }
 }

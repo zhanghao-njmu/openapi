@@ -25,7 +25,7 @@ An R6Class for text editing
 \if{latex}{\out{\hypertarget{method-TextEditing-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TextEditing$new(input = NULL, response)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TextEditing$new(response, input = NULL)}\if{html}{\out{</div>}}
 }
 
 }

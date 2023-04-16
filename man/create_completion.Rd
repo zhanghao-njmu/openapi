@@ -22,9 +22,6 @@ create_completion(
   best_of = 1,
   logit_bias = NULL,
   user = NULL,
-  api_url = NULL,
-  api_key = NULL,
-  organization = NULL,
   max_tries = 1,
   timeout = 300,
   ...
@@ -65,17 +62,17 @@ create_completion(
 
 \item{user}{A unique identifier for the user requesting the completion.}
 
-\item{api_url}{The API URL to use (override the default URL).}
-
-\item{api_key}{The API key to use.}
-
-\item{organization}{The organization ID to use.}
-
 \item{max_tries}{The maximum number of times to try the request again in case of failure.}
 
 \item{timeout}{The maximum amount of time to wait for the request to complete.}
 
 \item{...}{Additional arguments to pass to making_requests().}
+
+\item{api_url}{The API URL to use (override the default URL).}
+
+\item{api_key}{The API key to use.}
+
+\item{organization}{The organization ID to use.}
 }
 \value{
 Response object of class 'CompletionResponse'.

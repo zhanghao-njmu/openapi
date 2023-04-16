@@ -11,11 +11,9 @@ create_image(
   size = c("1024x1024", "512x512", "256x256"),
   response_format = c("url", "b64_json"),
   user = NULL,
-  api_url = NULL,
-  api_key = NULL,
-  organization = NULL,
   max_tries = 1,
-  timeout = 300
+  timeout = 300,
+  ...
 )
 }
 \arguments{
@@ -31,15 +29,15 @@ create_image(
 
 \item{user}{the user to whom the API key belongs. Optional.}
 
+\item{max_tries}{maximum number of retries in case of a network error. Default is 1.}
+
+\item{timeout}{time in seconds to wait for the API response. Default is 300 seconds.}
+
 \item{api_url}{the url of the DALL-E API server. Optional.}
 
 \item{api_key}{the API key to use for the API. Required.}
 
 \item{organization}{the organization to which the API key belongs. Optional.}
-
-\item{max_tries}{maximum number of retries in case of a network error. Default is 1.}
-
-\item{timeout}{time in seconds to wait for the API response. Default is 300 seconds.}
 }
 \value{
 An object of class "ImagesResponse".

@@ -8,11 +8,9 @@ delete_file(
   endpoint = "v1/files",
   file_id,
   purpose = "fine-tune",
-  api_url = NULL,
-  api_key = NULL,
-  organization = NULL,
   max_tries = 1,
-  timeout = 300
+  timeout = 300,
+  ...
 )
 }
 \arguments{
@@ -22,15 +20,15 @@ delete_file(
 
 \item{purpose}{The purpose of the file. Default is "fine-tune".}
 
+\item{max_tries}{The maximum number of times to try the API request. Default is 1.}
+
+\item{timeout}{The timeout in seconds for API requests. Default is 300 seconds.}
+
 \item{api_url}{The OpenAI API URL. Default is "NULL.}
 
 \item{api_key}{The OpenAI API key. By default is NULL.}
 
 \item{organization}{The OpenAI organization. By default is NULL.}
-
-\item{max_tries}{The maximum number of times to try the API request. Default is 1.}
-
-\item{timeout}{The timeout in seconds for API requests. Default is 300 seconds.}
 }
 \description{
 This function allows you to delete a file stored in OpenAI API.

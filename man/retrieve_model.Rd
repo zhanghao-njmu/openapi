@@ -7,11 +7,9 @@
 retrieve_model(
   endpoint = "v1/models",
   model = "text-davinci-003",
-  api_url = NULL,
-  api_key = NULL,
-  organization = NULL,
   max_tries = 1,
-  timeout = 300
+  timeout = 300,
+  ...
 )
 }
 \arguments{
@@ -19,15 +17,15 @@ retrieve_model(
 
 \item{model}{a character string indicating the model name, default is "text-davinci-003"}
 
+\item{max_tries}{an integer value indicating maximum number of tries, default is 1}
+
+\item{timeout}{a numeric value indicating request timeout in seconds, default is 300}
+
 \item{api_url}{a character string indicating the OpenAI API URL, default is NULL}
 
 \item{api_key}{a character string for the OpenAI API key, default is NULL}
 
 \item{organization}{a character string indicating the API organization, default is NULL}
-
-\item{max_tries}{an integer value indicating maximum number of tries, default is 1}
-
-\item{timeout}{a numeric value indicating request timeout in seconds, default is 300}
 }
 \value{
 Response object of class 'ModelsResponse'.

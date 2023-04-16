@@ -8,11 +8,9 @@ upload_file(
   endpoint = "v1/files",
   file,
   purpose = "fine-tune",
-  api_url = NULL,
-  api_key = NULL,
-  organization = NULL,
   max_tries = 1,
-  timeout = 300
+  timeout = 300,
+  ...
 )
 }
 \arguments{
@@ -22,15 +20,15 @@ upload_file(
 
 \item{purpose}{The intended purpose for uploading the file (default: "fine-tune")}
 
+\item{max_tries}{The maximum number of times to attempt the API call (default: 1)}
+
+\item{timeout}{The timeout value for the API call in seconds (default: 300)}
+
 \item{api_url}{The URL of the OpenAI API (default: NULL)}
 
 \item{api_key}{The API key for accessing the OpenAI API (default: NULL)}
 
 \item{organization}{The organization associated with the API key (default: NULL)}
-
-\item{max_tries}{The maximum number of times to attempt the API call (default: 1)}
-
-\item{timeout}{The timeout value for the API call in seconds (default: 300)}
 }
 \description{
 Uploads a file to the OpenAI API for fine-tuning models, among other purposes.
