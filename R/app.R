@@ -417,4 +417,4 @@ ChatGPT_app <- function(db = NULL, ...) {
   shinyApp(ui = ui, server = server)
 }
 
-ChatGPT_app(db = "chatgpt.sqlite")
+# ChatGPT_app(db = "chatgpt.sqlite")
