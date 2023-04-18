@@ -242,19 +242,22 @@ ChatGPT_app <- function(db = NULL, ...) {
 
     observe({
       if (!is.null(db)) {
-        # print("loading data")
         user <- res_auth[["user"]]
         if (paste0(user, "_data") %in% dbListTables(con)) {
           message("Loading data for user: ", user, "...")
           userdata <- dbReadTable(con, paste0(user, "_data"))
           if (nrow(userdata) > 0) {
             r$rooms$rooms <- NULL
+            # cat("loading data", unique(userdata[["room"]]), "\n")
             data_rooms <- split.data.frame(userdata, userdata[["room"]])
-            for (room in data_rooms) {
-              room_nm <- room[["room"]][1]
+            for (room_nm in unique(userdata[["room"]])) {
+              room <- data_rooms[[room_nm]]
               stream_file <- room[["stream_file"]][1]
               messages <- apply(room[, c("role", "content", "time"), drop = FALSE], 1, as.list)
               names(messages) <- NULL
+              if (length(messages) == 1 && is.na(messages[[1]][["content"]])) {
+                messages <- NULL
+              }
               r$rooms$room_add(name = room_nm, chat_params = args, messages = messages, stream_file = stream_file)
               if (length(messages) > 1 && messages[[length(messages)]][["role"]] == "assistant") {
                 r$rooms$rooms[[room_nm]]$text <- messages[[length(messages)]][["content"]]
@@ -369,27 +372,29 @@ ChatGPT_app <- function(db = NULL, ...) {
           div(style = "height:10px")
         ))
         r$rooms$room_current()$streaming()
-        # session$sendCustomMessage(type = "scrollCallback", 1)
       } else {
         enable("chat_submit")
         enable("chat_regenerate")
         enable("chat_continuous")
         stopUI(NULL)
         if (!is.null(db) & !is.null(res_auth[["user"]])) {
-          # room<<-$rooms$rooms
           data_list <- lapply(names(r$rooms$rooms), function(nm) {
             room <- r$rooms$rooms[[nm]]
             if (is.null(room$history) || length(room$history) == 0) {
-              return(NULL)
+              data <- data.frame(
+                role = "assistant", content = NA, time = NA,
+                stream_file = room$stream_file, room = nm
+              )
+            } else {
+              data <- do.call(rbind.data.frame, room$history)
+              data[["stream_file"]] <- room$stream_file
+              data[["room"]] <- nm
             }
-            data <- do.call(rbind.data.frame, room$history)
-            data[["stream_file"]] <- room$stream_file
-            data[["room"]] <- nm
             return(data)
           })
           data_all <- do.call(rbind.data.frame, data_list)
           if (nrow(data_all) > 0) {
-            print("saving data")
+            # cat("saving data", unique(data_all[["room"]]), "\n")
             dbWriteTable(con, name = paste0(res_auth[["user"]], "_data"), value = data_all, overwrite = TRUE)
           }
         }
