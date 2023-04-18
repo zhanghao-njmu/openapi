@@ -11,20 +11,19 @@ menus_create <- function(rooms, current = NULL) {
         style <- "display: flex; flex-direction: row; margin:0;"
       }
       div(
-        div(
-          conditionalPanel(
-            condition = paste0("input.rename_chatroom", room_id, " == input.save_chatroom", room_id),
-            div(menuSubItem(tabName = room_id, text = room_nm, selected = selected), style = "width:100%;margin:15px;"),
-            style = "display: flex; align-items: center;"
-          ),
-          conditionalPanel(
-            condition = paste0("input.rename_chatroom", room_id, " != input.save_chatroom", room_id),
-            textInput(inputId = paste0("newname_", room_id), label = NULL, value = room_nm, width = "100%"),
-            style = "display: flex; align-items: center;"
-          ),
-          conditionalPanel(
-            condition = paste0("input.rename_chatroom", room_id, " != input.save_chatroom", room_id),
-            tags$script(paste0("
+        conditionalPanel(
+          condition = paste0("input.rename_chatroom", room_id, " == input.save_chatroom", room_id),
+          div(menuSubItem(tabName = room_id, text = room_nm, selected = selected), style = "width:100%;margin:15px;"),
+          style = "display: flex; align-items: center; flex:1;"
+        ),
+        conditionalPanel(
+          condition = paste0("input.rename_chatroom", room_id, " != input.save_chatroom", room_id),
+          textInput(inputId = paste0("newname_", room_id), label = NULL, value = room_nm, width = "100%"),
+          style = "display: flex; align-items: center; flex:1;"
+        ),
+        conditionalPanel(
+          condition = paste0("input.rename_chatroom", room_id, " != input.save_chatroom", room_id),
+          tags$script(paste0("
               $(document).ready(function() {
                 $('#", paste0("save_chatroom", room_id), "').click(function() {
                   $('#hidden_text').val('", x, "');
@@ -33,16 +32,15 @@ menus_create <- function(rooms, current = NULL) {
                 });
               });
             ", collapse = "")),
-            actionButton(inputId = paste0("save_chatroom", room_id), label = NULL, icon = icon("save"), style = "margin:5px; padding:5px;"),
-            style = "display: flex; align-items: center;"
-          ),
-          conditionalPanel(
-            condition = paste0("input.rename_chatroom", room_id, " == input.save_chatroom", room_id),
-            actionButton(inputId = paste0("rename_chatroom", room_id), label = NULL, icon = icon("edit"), style = "margin:5px; padding:5px;"),
-            style = "display: flex; align-items: center;"
-          ),
-          style = style
-        )
+          actionButton(inputId = paste0("save_chatroom", room_id), label = NULL, icon = icon("save"), style = "margin:5px; padding:5px;"),
+          style = "display: flex; align-items: center; flex:0;"
+        ),
+        conditionalPanel(
+          condition = paste0("input.rename_chatroom", room_id, " == input.save_chatroom", room_id),
+          actionButton(inputId = paste0("rename_chatroom", room_id), label = NULL, icon = icon("edit"), style = "margin:5px; padding:5px;"),
+          style = "display: flex; align-items: center; flex:0;"
+        ),
+        style = style
       )
     })
   )
@@ -75,11 +73,19 @@ ChatGPT_app <- function(db = NULL, ...) {
   colors <- c(dark = "#202123", darkchat = "#353541", lightchat = "#4D4F5C", input = "#41404e")
   openai_path <- system.file("icons", "openai-icon.svg", package = "openapi")
   openai_logo <- readLines(openai_path, warn = FALSE)
-  user_path <- system.file("icons", "my-account-icon.svg", package = "openapi")
+  user_path <- system.file("icons", "user-icon.svg", package = "openapi")
   user_logo <- readLines(user_path, warn = FALSE)
 
+
   ui <- shinydashboardPlus::dashboardPage(
-    header = dashboardHeader(),
+    header = shinydashboardPlus::dashboardHeader(title = tagList(
+      tags$span(
+        class = "logo-mini", div(HTML(paste0(openai_logo, collapse = "\n")), style = "padding: 20%")
+      ),
+      tags$span(
+        class = "logo-lg", "ChatGPT"
+      )
+    )),
     sidebar = dashboardSidebar(
       sidebarMenu(
         id = "menu",
@@ -155,7 +161,7 @@ ChatGPT_app <- function(db = NULL, ...) {
             uiOutput("chat_output"),
             div(style = "border-bottom: 1px solid #ccc;"),
             div(style = "height:5px;"),
-            div(actionButton("chat_regenerate", label = "Regenerate", icon = icon("repeat"), width = "120px"), style = "float:right;"),
+            div(actionButton("chat_regenerate", label = "Regenerate", icon = icon("repeat"), width = "120px"), style = "float: right;"),
             div(style = "height:50px")
             # div(style = "border-top: 2px solid #202123"),
             # div(style = "height:5px;")
@@ -258,7 +264,7 @@ ChatGPT_app <- function(db = NULL, ...) {
           }
         }
         menuUI(menus_create(names(r$rooms$rooms), current = r$rooms$current))
-        r$refresh <- TRUE
+        historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
       }
       NULL
     })
@@ -415,4 +421,5 @@ ChatGPT_app <- function(db = NULL, ...) {
   shinyApp(ui = ui, server = server)
 }
 
+# ChatGPT_app()
 # ChatGPT_app(db = "chatgpt.sqlite")
