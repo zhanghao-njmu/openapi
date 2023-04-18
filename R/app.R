@@ -103,27 +103,24 @@ ChatGPT_app <- function(db = NULL, ...) {
     skin = "black-light",
     dashboardBody(
       useShinyjs(),
-      tabItems(
-        tabItem(
-          tabName = "room1",
-          tags$head(
-            tags$style(
-              paste0("#chat_input{color:white; background: ", colors["input"], "; font-size:12px;
+      tags$head(
+        tags$style(
+          paste0("#chat_input{color:white; background: ", colors["input"], "; font-size:12px;
                     height:auto; min-height:100px; max-height: 100%;
                     white-space: pre-wrap; overflow-wrap: break-word;}")
-            )
-          ),
-          # tags$head(
-          #   tags$script("
-          #               Shiny.addCustomMessageHandler(\"scrollCallback\",
-          #                   function(x) {
-          #                     var objDiv = document.getElementById(\"chat_output_container\");
-          #                     objDiv.scrollTop = objDiv.scrollHeight;
-          #                   }
-          #               );")
-          # ),
-          tags$head(
-            tags$script(HTML("
+        )
+      ),
+      # tags$head(
+      #   tags$script("
+      #               Shiny.addCustomMessageHandler(\"scrollCallback\",
+      #                   function(x) {
+      #                     var objDiv = document.getElementById(\"chat_output_container\");
+      #                     objDiv.scrollTop = objDiv.scrollHeight;
+      #                   }
+      #               );")
+      # ),
+      tags$head(
+        tags$script(HTML("
                       $(function() {
                         var $els = $(\"[data-proxy-click]\");
                         $.each(
@@ -144,61 +141,59 @@ ChatGPT_app <- function(db = NULL, ...) {
                         );
                       });
                     "))
+      ),
+      box(
+        width = 12,
+        title = "Chat Room",
+        status = "primary",
+        solidHeader = FALSE,
+        collapsible = TRUE,
+        fillCol(
+          flex = NA,
+          div(
+            id = "chat_output_container", style = "height: 100%; max-height: 100%; overflow-y: auto;",
+            uiOutput("chat_output"),
+            div(style = "border-bottom: 1px solid #ccc;"),
+            div(style = "height:5px;"),
+            div(actionButton("chat_regenerate", label = "Regenerate", icon = icon("repeat"), width = "120px"), style = "float:right;"),
+            div(style = "height:50px")
+            # div(style = "border-top: 2px solid #202123"),
+            # div(style = "height:5px;")
           ),
-          box(
-            width = 12,
-            title = "Chat Room",
-            status = "primary",
-            solidHeader = FALSE,
-            collapsible = TRUE,
-            fillCol(
-              flex = NA,
-              div(
-                id = "chat_output_container", style = "height: 100%; max-height: 100%; overflow-y: auto;",
-                uiOutput("chat_output"),
-                div(style = "border-bottom: 1px solid #ccc;"),
-                div(style = "height:5px;"),
-                div(actionButton("chat_regenerate", label = "Regenerate", icon = icon("repeat"), width = "120px"), style = "float:right;"),
-                div(style = "height:50px")
-                # div(style = "border-top: 2px solid #202123"),
-                # div(style = "height:5px;")
-              ),
-              div(
-                id = "chat_input_container", style = "bottom: 0; height: 100%; max-height: 100%; width: 100%;",
-                uiOutput("chat_stop_ui"),
-                div(style = "border-top: 2px solid #202123"),
-                div(style = "height:10px"),
-                fillRow(
-                  flex = c(1, NA),
-                  tagAppendAttributes(
-                    div(
-                      textAreaInput(
-                        inputId = "chat_input",
-                        label = NULL,
-                        value = NULL,
-                        resize = "vertical",
-                        width = "99%",
-                        height = "100%",
-                        placeholder = "Enter your prompts here (Press Enter + Shift to start a new line)"
-                      ),
-                      tags$script("
+          div(
+            id = "chat_input_container", style = "bottom: 0; height: 100%; max-height: 100%; width: 100%;",
+            uiOutput("chat_stop_ui"),
+            div(style = "border-top: 2px solid #202123"),
+            div(style = "height:10px"),
+            fillRow(
+              flex = c(1, NA),
+              tagAppendAttributes(
+                div(
+                  textAreaInput(
+                    inputId = "chat_input",
+                    label = NULL,
+                    value = NULL,
+                    resize = "vertical",
+                    width = "99%",
+                    height = "100%",
+                    placeholder = "Enter your prompts here (Press Enter + Shift to start a new line)"
+                  ),
+                  tags$script("
                       var textarea = document.getElementById(\"chat_input\");
                       textarea.addEventListener(\"input\", function() {
                           textarea.style.height = 'auto';
                           textarea.style.overflowY = 'hidden';
                           textarea.style.height = `${textarea.scrollHeight}px`;
                       });")
-                    ),
-                    "data-proxy-click" = "chat_submit"
-                  ),
-                  fillCol(
-                    flex = NA,
-                    materialSwitch("chat_continuous", label = "Continuous", status = "primary", value = TRUE, width = "130px"),
-                    actionButton("chat_submit", label = "Send", icon = icon("paper-plane"), width = "130px", style = "text-align: center;"),
-                    div(style = "height:3px"),
-                    actionButton("chat_clear", label = "Clear chat", icon = icon("rotate-right"), width = "130px", style = "text-align: center;")
-                  )
-                )
+                ),
+                "data-proxy-click" = "chat_submit"
+              ),
+              fillCol(
+                flex = NA,
+                materialSwitch("chat_continuous", label = "Continuous", status = "primary", value = TRUE, width = "130px"),
+                actionButton("chat_submit", label = "Send", icon = icon("paper-plane"), width = "130px", style = "text-align: center;"),
+                div(style = "height:3px"),
+                actionButton("chat_clear", label = "Clear chat", icon = icon("rotate-right"), width = "130px", style = "text-align: center;")
               )
             )
           )
@@ -239,12 +234,6 @@ ChatGPT_app <- function(db = NULL, ...) {
       rooms = ChatRooms$new(chat_params = args),
       refresh = FALSE
     )
-
-    menuUI <- reactiveVal(menus_create(names(isolate(r$rooms$rooms))))
-    stopUI <- reactiveVal()
-    historyUI <- reactiveVal()
-    outputUI <- reactiveVal()
-
     observe({
       if (!is.null(db)) {
         # print("loading data")
@@ -253,6 +242,7 @@ ChatGPT_app <- function(db = NULL, ...) {
           message("Loading data for user: ", user, "...")
           userdata <- dbReadTable(con, paste0(user, "_data"))
           if (nrow(userdata) > 0) {
+            r$rooms$rooms <- NULL
             data_rooms <- split.data.frame(userdata, userdata[["room"]])
             for (room in data_rooms) {
               room_nm <- room[["room"]][1]
@@ -263,6 +253,7 @@ ChatGPT_app <- function(db = NULL, ...) {
               if (length(messages) > 1 && messages[[length(messages)]][["role"]] == "assistant") {
                 r$rooms$rooms[[room_nm]]$text <- messages[[length(messages)]][["content"]]
               }
+              r$rooms$current <- names(r$rooms$rooms)[1]
             }
           }
         }
@@ -271,6 +262,11 @@ ChatGPT_app <- function(db = NULL, ...) {
       }
       NULL
     })
+
+    menuUI <- reactiveVal(menus_create(names(isolate(r$rooms$rooms))))
+    stopUI <- reactiveVal()
+    historyUI <- reactiveVal()
+    outputUI <- reactiveVal()
 
     observe({
       r$rooms$room_add(chat_params = args)

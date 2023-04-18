@@ -495,7 +495,7 @@ ChatRooms <- R6Class(
     },
     room_add = function(name = NULL, ...) {
       if (is.null(name)) {
-        n <- gsub("(^room)(\\d+)", "\\2", grep("(^room)(\\d+)", names(self$rooms), value = TRUE))
+        n <- gsub("(^room)(\\d+$)", "\\2", grep("(^room)(\\d+$)", names(self$rooms), value = TRUE))
         if (length(n) > 0) {
           name <- paste0("room", max(max(as.numeric(n), na.rm = TRUE) + 1, 1))
         } else {
