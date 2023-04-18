@@ -111,7 +111,6 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
     stopApp()
   }
 
-  colors <- c(dark = "#202123", input = "#41404e")
   openai_path <- system.file("icons", "openai-icon.svg", package = "openapi")
   openai_logo <- readLines(openai_path, warn = FALSE)
   user_path <- system.file("icons", "my-account-icon.svg", package = "openapi")
@@ -122,7 +121,7 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
     id = "addin",
     # tags$style(
     #   type = "text/css",
-    #   paste0("#addin { background-color: ",colors["dark"],"; }"),
+    #   paste0("#addin { background-color: #4D4F5C; }"),
     # ),
     miniTitleBar(tags$strong("ChatGPT"), right = miniTitleBarButton("exit", label = "Exit")),
     miniTabstripPanel(
@@ -130,7 +129,7 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
         icon = icon("comments"),
         tags$head(
           tags$style(
-            paste0("#chat_input{color:white; background: ", colors["input"], "; font-size:12px;
+            paste0("#chat_input{color:white; background: #41404e; font-size:12px;
                     height:auto; min-height:100px; max-height: 100%;
                     white-space: pre-wrap; overflow-wrap: break-word;}")
           )

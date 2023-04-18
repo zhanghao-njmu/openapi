@@ -503,7 +503,6 @@ ChatRooms <- R6Class(
         }
       }
       self$rooms[[name]] <- ChatRoom$new(...)
-      self$current <- name
       invisible(self)
     },
     room_remove = function(name = NULL) {

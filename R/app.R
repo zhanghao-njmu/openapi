@@ -70,15 +70,19 @@ ChatGPT_app <- function(db = NULL, ...) {
     stopApp()
   }
 
-  colors <- c(dark = "#202123", darkchat = "#353541", lightchat = "#4D4F5C", input = "#41404e")
+  # colors <- c(dark = "#202123", darkchat = "#353541", lightchat = "#4D4F5C", input = "#41404e")
   openai_path <- system.file("icons", "openai-icon.svg", package = "openapi")
   openai_logo <- readLines(openai_path, warn = FALSE)
   user_path <- system.file("icons", "user-icon.svg", package = "openapi")
   user_logo <- readLines(user_path, warn = FALSE)
-
+  welcome_message <- "Welcome to the ChatGPT!
+  \n\nThis is an AI chatbot based on the OpenAI API that can engage in intelligent conversations with you.
+  \n\nPlease enter your questions or topics in the input box below and press \"Send\" button on the right to start chatting with the chatbot.
+  \n\nHave a great time!"
 
   ui <- shinydashboardPlus::dashboardPage(
-    header = shinydashboardPlus::dashboardHeader(title = tagList(
+    title = "ChatGPT",
+    header = dashboardHeader(title = tagList(
       tags$span(
         class = "logo-mini", div(HTML(paste0(openai_logo, collapse = "\n")), style = "padding: 20%")
       ),
@@ -109,45 +113,6 @@ ChatGPT_app <- function(db = NULL, ...) {
     skin = "black-light",
     dashboardBody(
       useShinyjs(),
-      tags$head(
-        tags$style(
-          paste0("#chat_input{color:white; background: ", colors["input"], "; font-size:12px;
-                    height:auto; min-height:100px; max-height: 100%;
-                    white-space: pre-wrap; overflow-wrap: break-word;}")
-        )
-      ),
-      # tags$head(
-      #   tags$script("
-      #               Shiny.addCustomMessageHandler(\"scrollCallback\",
-      #                   function(x) {
-      #                     var objDiv = document.getElementById(\"chat_output_container\");
-      #                     objDiv.scrollTop = objDiv.scrollHeight;
-      #                   }
-      #               );")
-      # ),
-      tags$head(
-        tags$script(HTML("
-                      $(function() {
-                        var $els = $(\"[data-proxy-click]\");
-                        $.each(
-                          $els,
-                          function(idx, el) {
-                            var $el = $(el);
-                            var $proxy = $(\"#\" + $el.data(\"proxyClick\"));
-                            $el.keydown(function(e) {
-                              if (e.keyCode === 13 && !e.shiftKey) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setTimeout(function() {
-                                 $proxy.click();
-                                }, 500);
-                              }
-                            });
-                          }
-                        );
-                      });
-                    "))
-      ),
       box(
         width = 12,
         title = "Chat Room",
@@ -184,13 +149,41 @@ ChatGPT_app <- function(db = NULL, ...) {
                     height = "100%",
                     placeholder = "Enter your prompts here (Press Enter + Shift to start a new line)"
                   ),
+                  tags$head(
+                    tags$style(
+                      "#chat_input{color:white; background: #41404e; font-size:12px;
+                        height:auto; min-height:100px; max-height: 100%;
+                        white-space: pre-wrap; overflow-wrap: break-word;}"
+                    )
+                  ),
                   tags$script("
                       var textarea = document.getElementById(\"chat_input\");
                       textarea.addEventListener(\"input\", function() {
                           textarea.style.height = 'auto';
                           textarea.style.overflowY = 'hidden';
                           textarea.style.height = `${textarea.scrollHeight}px`;
-                      });")
+                      });"),
+                  tags$script(HTML("
+                      $(function() {
+                        var $els = $(\"[data-proxy-click]\");
+                        $.each(
+                          $els,
+                          function(idx, el) {
+                            var $el = $(el);
+                            var $proxy = $(\"#\" + $el.data(\"proxyClick\"));
+                            $el.keydown(function(e) {
+                              if (e.keyCode === 13 && !e.shiftKey) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setTimeout(function() {
+                                 $proxy.click();
+                                }, 500);
+                              }
+                            });
+                          }
+                        );
+                      });
+                    "))
                 ),
                 "data-proxy-click" = "chat_submit"
               ),
@@ -233,6 +226,8 @@ ChatGPT_app <- function(db = NULL, ...) {
       res_auth <- secure_server(check_credentials(db = db))
       con <- dbConnect(SQLite(), db)
       onStop(function() dbDisconnect(con))
+    } else {
+      res_auth <- reactiveValues()
     }
 
     args <- args[setdiff(names(args), "db")]
@@ -240,6 +235,11 @@ ChatGPT_app <- function(db = NULL, ...) {
       rooms = ChatRooms$new(chat_params = args),
       refresh = FALSE
     )
+    menuUI <- reactiveVal(menus_create(names(isolate(r$rooms$rooms)), current = names(isolate(r$rooms$rooms))[1]))
+    stopUI <- reactiveVal()
+    historyUI <- reactiveVal(div_update(NULL, openai_logo = openai_logo, user_logo = user_logo))
+    outputUI <- reactiveVal()
+
     observe({
       if (!is.null(db)) {
         # print("loading data")
@@ -269,14 +269,10 @@ ChatGPT_app <- function(db = NULL, ...) {
       NULL
     })
 
-    menuUI <- reactiveVal(menus_create(names(isolate(r$rooms$rooms))))
-    stopUI <- reactiveVal()
-    historyUI <- reactiveVal()
-    outputUI <- reactiveVal()
-
     observe({
       r$rooms$room_add(chat_params = args)
       menuUI(menus_create(names(r$rooms$rooms), current = r$rooms$current))
+      historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
       r$refresh <- TRUE
       NULL
     }) %>% bindEvent(input$add_chatroom)
@@ -285,16 +281,24 @@ ChatGPT_app <- function(db = NULL, ...) {
       if (length(r$rooms$rooms) > 1) {
         r$rooms$room_remove()
         menuUI(menus_create(names(r$rooms$rooms), current = r$rooms$current))
+        historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
         r$refresh <- TRUE
       }
       NULL
     }) %>% bindEvent(input$remove_chatroom)
 
     observe({
-      r$rooms$current <- names(r$rooms$rooms)[as.numeric(gsub("room", "", input$menu))]
+      room_id <- input$menu %||% names(r$rooms$rooms)[1]
+      r$rooms$current <- names(r$rooms$rooms)[as.numeric(gsub("room", "", room_id))]
       menuUI(menus_create(names(r$rooms$rooms), current = r$rooms$current))
-      historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
-      outputUI(gsub("\\n$", "", markdown(r$rooms$room_current()$text)))
+      if (is.null(r$rooms$room_current()$history)) {
+        r$rooms$rooms[[r$rooms$current]]$text <- welcome_message
+        historyUI(div_update(NULL, openai_logo = openai_logo, user_logo = user_logo))
+        outputUI(gsub("\\n$", "", markdown(r$rooms$room_current()$text)))
+      } else {
+        historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
+        outputUI(gsub("\\n$", "", markdown(r$rooms$room_current()$text)))
+      }
       NULL
     }) %>% bindEvent(input$menu)
 
@@ -308,10 +312,6 @@ ChatGPT_app <- function(db = NULL, ...) {
       menuUI(menus_create(names(r$rooms$rooms), current = r$rooms$current))
       NULL
     }) %>% bindEvent(input$hidden_button)
-
-    output$chatitems <- renderUI({
-      menuUI()
-    })
 
     observe({
       if (input$chat_input != "" && isFALSE(r$refresh)) {
@@ -349,6 +349,7 @@ ChatGPT_app <- function(db = NULL, ...) {
       enable("chat_regenerate")
       enable("chat_continuous")
       r$rooms$room_current()$chat_clear()
+      historyUI(div_update(NULL, openai_logo = openai_logo, user_logo = user_logo))
       r$refresh <- TRUE
       NULL
     }) %>% bindEvent(input$chat_clear)
@@ -356,51 +357,49 @@ ChatGPT_app <- function(db = NULL, ...) {
     observe({
       r$refresh <- !resolved(r$rooms$room_current()$async)
       if (is.null(r$rooms$room_current()$history)) {
-        r$rooms$rooms[[r$rooms$current]]$text <- "Welcome to the ChatGPT!\n\nThis is an AI chatbot based on the OpenAI API that can engage in intelligent conversations with you.\n\nPlease enter your questions or topics in the input box below and press \"Send\" button on the right to start chatting with the chatbot.\n\nHave a great time!"
-        historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
+        r$rooms$rooms[[r$rooms$current]]$text <- welcome_message
+      }
+      if (isTRUE(r$refresh)) {
+        disable("chat_submit")
+        disable("chat_regenerate")
+        disable("chat_continuous")
+        invalidateLater(50)
+        stopUI(div(
+          div(actionButton("chat_stop", label = "Stop generating", icon = icon("stop"), width = "150px"), style = "text-align: center;"),
+          div(style = "height:10px")
+        ))
+        r$rooms$room_current()$streaming()
+        # session$sendCustomMessage(type = "scrollCallback", 1)
       } else {
-        if (isTRUE(r$refresh)) {
-          disable("chat_submit")
-          disable("chat_regenerate")
-          disable("chat_continuous")
-          invalidateLater(50)
-          stopUI(div(
-            div(actionButton("chat_stop", label = "Stop generating", icon = icon("stop"), width = "150px"), style = "text-align: center;"),
-            div(style = "height:10px")
-          ))
-          r$rooms$room_current()$streaming()
-          outputUI(gsub("\\n$", "", markdown(r$rooms$room_current()$text)))
-          # session$sendCustomMessage(type = "scrollCallback", 1)
-        } else {
-          enable("chat_submit")
-          enable("chat_regenerate")
-          enable("chat_continuous")
-          stopUI(NULL)
-          if (!is.null(db)) {
-            # print("saving data")
-            # room<<-$rooms$rooms
-            data_list <- lapply(names(r$rooms$rooms), function(nm) {
-              room <- r$rooms$rooms[[nm]]
-              if (is.null(room$history) || length(room$history) == 0) {
-                return(NULL)
-              }
-              data <- do.call(rbind.data.frame, room$history)
-              data[["stream_file"]] <- room$stream_file
-              data[["room"]] <- nm
-              return(data)
-            })
-            data_all <- do.call(rbind.data.frame, data_list)
-            if (nrow(data_all) > 0) {
-              # print("saving data")
-              dbWriteTable(con, name = paste0(res_auth[["user"]], "_data"), value = data_all, overwrite = TRUE)
+        enable("chat_submit")
+        enable("chat_regenerate")
+        enable("chat_continuous")
+        stopUI(NULL)
+        if (!is.null(db) & !is.null(res_auth[["user"]])) {
+          # room<<-$rooms$rooms
+          data_list <- lapply(names(r$rooms$rooms), function(nm) {
+            room <- r$rooms$rooms[[nm]]
+            if (is.null(room$history) || length(room$history) == 0) {
+              return(NULL)
             }
+            data <- do.call(rbind.data.frame, room$history)
+            data[["stream_file"]] <- room$stream_file
+            data[["room"]] <- nm
+            return(data)
+          })
+          data_all <- do.call(rbind.data.frame, data_list)
+          if (nrow(data_all) > 0) {
+            print("saving data")
+            dbWriteTable(con, name = paste0(res_auth[["user"]], "_data"), value = data_all, overwrite = TRUE)
           }
         }
       }
-      if (isFALSE(r$refresh)) {
-        outputUI(gsub("\\n$", "", markdown(r$rooms$room_current()$text)))
-      }
+      outputUI(gsub("\\n$", "", markdown(r$rooms$room_current()$text)))
       NULL
+    })
+
+    output$chatitems <- renderUI({
+      menuUI()
     })
 
     output$chat_output <- renderUI({
