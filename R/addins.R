@@ -303,7 +303,7 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
             div(style = "height:10px")
           ))
           r$room$streaming()
-          outputUI(gsub("\\n$", "", markdown(paste0(r$room$text, collapse = "\n"))))
+          outputUI(gsub("\\n$", "", markdown(r$room$text)))
           # session$sendCustomMessage(type = "scrollCallback", 1)
         } else {
           enable("chat_submit")
@@ -313,7 +313,7 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
         }
       }
       if (isFALSE(r$refresh)) {
-        outputUI(gsub("\\n$", "", markdown(paste0(r$room$text, collapse = "\n"))))
+        outputUI(gsub("\\n$", "", markdown(r$room$text)))
       }
       NULL
     })

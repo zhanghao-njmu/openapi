@@ -292,7 +292,7 @@ ChatGPT_app <- function(db = NULL, ...) {
       r$rooms$current <- names(r$rooms$rooms)[as.numeric(gsub("room", "", input$menu))]
       menuUI(menus_create(names(r$rooms$rooms), current = r$rooms$current))
       historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
-      outputUI(gsub("\\n$", "", markdown(paste0(r$rooms$room_current()$text, collapse = "\n"))))
+      outputUI(gsub("\\n$", "", markdown(r$rooms$room_current()$text)))
       NULL
     }) %>% bindEvent(input$menu)
 
@@ -367,7 +367,7 @@ ChatGPT_app <- function(db = NULL, ...) {
             div(style = "height:10px")
           ))
           r$rooms$room_current()$streaming()
-          outputUI(gsub("\\n$", "", markdown(paste0(r$rooms$room_current()$text, collapse = "\n"))))
+          outputUI(gsub("\\n$", "", markdown(r$rooms$room_current()$text)))
           # session$sendCustomMessage(type = "scrollCallback", 1)
         } else {
           enable("chat_submit")
@@ -375,6 +375,8 @@ ChatGPT_app <- function(db = NULL, ...) {
           enable("chat_continuous")
           stopUI(NULL)
           if (!is.null(db)) {
+            # print("saving data")
+            # room<<-$rooms$rooms
             data_list <- lapply(names(r$rooms$rooms), function(nm) {
               room <- r$rooms$rooms[[nm]]
               if (is.null(room$history) || length(room$history) == 0) {
@@ -394,7 +396,7 @@ ChatGPT_app <- function(db = NULL, ...) {
         }
       }
       if (isFALSE(r$refresh)) {
-        outputUI(gsub("\\n$", "", markdown(paste0(r$rooms$room_current()$text, collapse = "\n"))))
+        outputUI(gsub("\\n$", "", markdown(r$rooms$room_current()$text)))
       }
       NULL
     })

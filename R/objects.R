@@ -471,7 +471,7 @@ ChatRoom <- R6Class(
           self$async <- NULL
         }
       }
-      self$text <- text
+      self$text <- paste0(text, collapse = "\n")
       invisible(self)
     }
   )
