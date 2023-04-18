@@ -225,7 +225,6 @@ ChatGPT_app <- function(db = NULL, ...) {
     if (!is.null(db)) {
       res_auth <- secure_server(check_credentials(db = db))
       con <- dbConnect(SQLite(), db)
-      onStop(function() dbDisconnect(con))
     } else {
       res_auth <- reactiveValues()
     }
@@ -377,27 +376,6 @@ ChatGPT_app <- function(db = NULL, ...) {
         enable("chat_regenerate")
         enable("chat_continuous")
         stopUI(NULL)
-        if (!is.null(db) & !is.null(res_auth[["user"]])) {
-          data_list <- lapply(names(r$rooms$rooms), function(nm) {
-            room <- r$rooms$rooms[[nm]]
-            if (is.null(room$history) || length(room$history) == 0) {
-              data <- data.frame(
-                role = "assistant", content = NA, time = NA,
-                stream_file = room$stream_file, room = nm
-              )
-            } else {
-              data <- do.call(rbind.data.frame, room$history)
-              data[["stream_file"]] <- room$stream_file
-              data[["room"]] <- nm
-            }
-            return(data)
-          })
-          data_all <- do.call(rbind.data.frame, data_list)
-          if (nrow(data_all) > 0) {
-            # cat("saving data", unique(data_all[["room"]]), "\n")
-            dbWriteTable(con, name = paste0(res_auth[["user"]], "_data"), value = data_all, overwrite = TRUE)
-          }
-        }
       }
       outputUI(gsub("\\n$", "", markdown(r$rooms$room_current()$text)))
       NULL
@@ -418,6 +396,35 @@ ChatGPT_app <- function(db = NULL, ...) {
     output$chat_stop_ui <- renderUI({
       stopUI()
     })
+
+    session$onSessionEnded(
+      function() {
+        user <- isolate(res_auth[["user"]])
+        rooms <- isolate(r$rooms$rooms)
+        if (!is.null(db) & !is.null(user)) {
+          data_list <- lapply(names(rooms), function(nm) {
+            room <- rooms[[nm]]
+            if (is.null(room$history) || length(room$history) == 0) {
+              data <- data.frame(
+                role = "assistant", content = NA, time = NA,
+                stream_file = room$stream_file, room = nm
+              )
+            } else {
+              data <- do.call(rbind.data.frame, room$history)
+              data[["stream_file"]] <- room$stream_file
+              data[["room"]] <- nm
+            }
+            return(data)
+          })
+          data_all <- do.call(rbind.data.frame, data_list)
+          if (nrow(data_all) > 0) {
+            # cat("saving data", unique(data_all[["room"]]), "\n")
+            dbWriteTable(con, name = paste0(user, "_data"), value = data_all, overwrite = TRUE)
+          }
+          dbDisconnect(con)
+        }
+      }
+    )
 
     session$allowReconnect(TRUE)
   }
