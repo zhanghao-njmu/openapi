@@ -1,16 +1,16 @@
 div_create <- function(messages, openai_logo, user_logo) {
   # print(rnorm(1))
   divs <- list()
+  time_chat_output <- NULL
   if (length(messages) > 0) {
     content <- sapply(messages, function(x) x[["content"]])
     role <- sapply(messages, function(x) x[["role"]])
     time <- sapply(messages, function(x) x[["time"]])
 
     # remove assistant's last message
-    if (role[length(role)] == "assistant") {
-      content <- content[-length(content)]
-      role <- role[-length(role)]
-      time <- time[-length(time)]
+    if (role[length(messages)] == "assistant") {
+      content <- content[-length(messages)]
+      time_chat_output <- time[length(messages)]
     }
 
     # create HTML divs for each message
@@ -18,30 +18,67 @@ div_create <- function(messages, openai_logo, user_logo) {
       if (role[i] == "user") {
         divs <- c(divs, list(
           div(
-            div(div(HTML(paste0(user_logo, collapse = "\n")), style = "width:30px; height:30px"),
-              div(style = "width:5px;"),
-              style = "display: flex; flex-direction: row;"
+            style = "display: flex; flex-direction: row; justify-content: flex-end;",
+            div(
+              div(style = "height:20px; text-align: right;", time[i] %||% as.character(Sys.time())),
+              div(
+                style = "display: flex; flex-direction: row; align-items: end; justify-content: flex-end;",
+                actionButton(
+                  inputId = paste0("copy", "input_", i), label = NULL, icon = icon("copy"),
+                  class = "clipboardButton", `data-clipboard-target` = paste0("#chat_input", i),
+                  onmouseover = "this.style.borderColor='black';this.style.opacity=1;",
+                  onmouseout = "this.style.borderColor='transparent';this.style.opacity=0.3;",
+                  style = "opacity: 0.3;margin:1px; padding:2px;background-color:transparent;border-color:transparent;"
+                ),
+                div(style = "text-align: right;", div(class = "chat_input", id = paste0("chat_input", i), gsub("\\n$", "", markdown(content[i]))))
+              )
             ),
             div(
-              div(time[i] %||% as.character(Sys.time()), style = "height:20px;"),
-              div(class = "chat_input", gsub("\\n$", "", markdown(content[i])))
-            ),
-            style = "display: flex; flex-direction: row;"
+              style = "display: flex; flex-direction: row; justify-content: flex-end;",
+              div(style = "width:5px;"),
+              div(style = "width:30px; height:30px;", HTML(paste0(user_logo, collapse = "\n")))
+            )
           ),
           div(style = "height:20px;")
         ))
       } else {
         divs <- c(divs, list(
           div(
-            div(div(HTML(paste0(openai_logo, collapse = "\n")), style = "width:30px; height:30px"),
-              div(style = "width:5px;"),
-              style = "display: flex; flex-direction: row;"
+            style = "display: flex; flex-direction: row;",
+            div(
+              style = "display: flex; flex-direction: row;",
+              div(style = "width:30px; height:30px;", HTML(paste0(openai_logo, collapse = "\n"))),
+              div(style = "width:5px;")
             ),
             div(
-              div(time[i] %||% as.character(Sys.time()), style = "height:20px;"),
-              div(class = "chat_output", gsub("\\n$", "", markdown(content[i])))
-            ),
-            style = "display: flex; flex-direction: row;"
+              div(style = "height:20px;", time[i] %||% as.character(Sys.time())),
+              div(
+                style = "display: flex; flex-direction: row; align-items: end;",
+                div(style = "text-align: left;", div(class = "chat_output", id = paste0("chat_output", i), gsub("\\n$", "", markdown(content[i])))),
+                actionButton(
+                  inputId = paste0("copy", "output_", i), label = NULL, icon = icon("copy"),
+                  class = "clipboardButton", `data-clipboard-target` = paste0("#chat_output", i),
+                  onmouseover = "this.style.borderColor='black';this.style.opacity=1;",
+                  onmouseout = "this.style.borderColor='transparent';this.style.opacity=0.3;",
+                  style = "opacity: 0.3;margin:1px; padding:2px;background-color:transparent;border-color:transparent;"
+                ),
+                tags$script(paste0("
+              $(document).ready(function() {
+                $('#", paste0("repeat", "output_", i), "').click(function() {
+                  $('#hidden_repeat_text').val('", i, "');
+                  $('#hidden_repeat_text').trigger('change');
+                  $('#hidden_repeat_button').trigger('click');
+                });
+              });
+            ", collapse = "")),
+                actionButton(
+                  inputId = paste0("repeat", "output_", i), label = NULL, icon = icon("repeat"),
+                  onmouseover = "this.style.borderColor='black';this.style.opacity=1;",
+                  onmouseout = "this.style.borderColor='transparent';this.style.opacity=0.3;",
+                  style = "opacity: 0.3;margin:1px; padding:2px;background-color:transparent;border-color:transparent;"
+                )
+              )
+            )
           ),
           div(style = "height:20px;")
         ))
@@ -52,15 +89,44 @@ div_create <- function(messages, openai_logo, user_logo) {
   # add final HTML div for ChatGPT output
   divs <- c(divs, list(
     div(
-      div(div(HTML(paste0(openai_logo, collapse = "\n")), style = "width:30px; height:30px"),
-        div(style = "width:5px;"),
-        style = "display: flex; flex-direction: row;"
+      style = "display: flex; flex-direction: row;",
+      div(
+        style = "display: flex; flex-direction: row;",
+        div(
+          style = "width:30px; height:30px;",
+          HTML(paste0(openai_logo, collapse = "\n"))
+        ),
+        div(style = "width:5px;")
       ),
       div(
-        div(as.character(Sys.time()), style = "height:20px;"),
-        uiOutput(outputId = "chat_output_last", class = "chat_output")
-      ),
-      style = "display: flex; flex-direction: row;"
+        div(style = "height:20px;", time_chat_output %||% as.character(Sys.time())),
+        div(
+          style = "display: flex; flex-direction: row; align-items: end;",
+          div(style = "text-align: left;", uiOutput(outputId = "chat_output_last", class = "chat_output")),
+          actionButton(
+            inputId = paste0("copy", "output_last"), label = NULL, icon = icon("copy"),
+            class = "clipboardButton", `data-clipboard-target` = "#chat_output_last",
+            onmouseover = "this.style.borderColor='black';this.style.opacity=1;",
+            onmouseout = "this.style.borderColor='transparent';this.style.opacity=0.3;",
+            style = "opacity: 0.3;margin:1px; padding:2px;background-color:transparent;border-color:transparent;"
+          ),
+          tags$script(paste0("
+              $(document).ready(function() {
+                $('#", paste0("repeat", "output_last"), "').click(function() {
+                  $('#hidden_repeat_text').val('", NULL, "');
+                  $('#hidden_repeat_text').trigger('change');
+                  $('#hidden_repeat_button').trigger('click');
+                });
+              });
+            ", collapse = "")),
+          actionButton(
+            inputId = paste0("repeat", "output_last"), label = NULL, icon = icon("repeat"),
+            onmouseover = "this.style.borderColor='black';this.style.opacity=1;",
+            onmouseout = "this.style.borderColor='transparent';this.style.opacity=0.3;",
+            style = "opacity: 0.3;margin:1px; padding:2px;background-color:transparent;border-color:transparent;"
+          )
+        )
+      )
     ),
     div(style = "height:20px;")
   ))
@@ -72,15 +138,21 @@ div_update <- function(messages, openai_logo, user_logo) {
   fluidPage(
     tagList(
       tags$head(tags$style(
-        paste0(".chat_input {color:black; background-color: white;
-                    padding: 10px 10px 0 10px; border-radius: 5px; border: 2px solid #4D4F5C;
+        paste0(".chat_input {background-color: #95EC69;
+                    padding: 10px 10px 0 10px; border-radius: 5px; text-align: right;
                     white-space: normal; overflow-wrap: break-word; display: inline-block;}")
       )),
       tags$head(tags$style(
-        paste0(".chat_output {color:black; background-color: white;
-                   padding: 10px 10px 0 10px; border-radius: 5px; border: 2px solid #353541;
+        paste0(".chat_output {background-color: #FFFFFF;
+                   padding: 10px 10px 0 10px; border-radius: 5px; text-align: left;
                    white-space: normal; overflow-wrap: break-word; display: inline-block;}")
       )),
+      tags$head(
+        tags$script(src = "lib/clipboard.min.js"),
+        tags$script(HTML(
+          "$(document).ready(function(){new ClipboardJS('.clipboardButton');});"
+        ))
+      ),
       div_create(messages, openai_logo = openai_logo, user_logo = user_logo)
     )
   )
@@ -116,6 +188,7 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
     stopApp()
   }
 
+  addResourcePath("lib", system.file("lib", package = "openapi"))
   openai_path <- system.file("icons", "openai-icon.svg", package = "openapi")
   openai_logo <- readLines(openai_path, warn = FALSE)
   user_path <- system.file("icons", "user-icon.svg", package = "openapi")
@@ -176,23 +249,24 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
                     "))
         ),
         miniContentPanel(
+          div(
+            style = "display:none;",
+            actionButton("hidden_repeat_button", label = NULL),
+            textInput("hidden_repeat_text", value = NULL, label = NULL)
+          ),
           fillCol(
             flex = c(1, NA),
             div(
-              id = "chat_output_container", style = "height: 100%; max-height: 100%; overflow-y: auto;",
+              id = "chat_output_container", style = "background: #F5F5F5; border-radius: 5px; padding: 10px 10px 10px 0;
+              height: 100%; max-height: 100%; overflow-y: auto;",
               uiOutput("chat_output"),
-              div(style = "border-bottom: 1px solid #ccc;"),
-              div(style = "height:5px;"),
-              div(actionButton("chat_regenerate", label = "Regenerate", icon = icon("repeat"), width = "120px"), style = "float:right;"),
-              div(style = "height:50px")
-              # div(style = "border-top: 2px solid #202123"),
-              # div(style = "height:5px;")
+              div(style = "height:30px;")
             ),
             div(
               id = "chat_input_container", style = "bottom: 0; height: 100%; max-height: 100%; width: 100%;",
-              uiOutput("chat_stop_ui"),
-              div(style = "border-top: 2px solid #202123"),
-              div(style = "height:10px"),
+              uiOutput("chat_stop_ui", style = "position: absolute; bottom: 100px; left: 50%;transform: translate(-50%, -50%); z-index: 999;"),
+              div(style = "border-top: 2px solid #202123;"),
+              div(style = "height:10px;"),
               fillRow(
                 flex = c(1, NA),
                 tagAppendAttributes(
@@ -218,7 +292,7 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
                 ),
                 fillCol(
                   flex = NA,
-                  materialSwitch("chat_continuous", label = "Continuous", status = "primary", value = TRUE, width = "130px"),
+                  materialSwitch("chat_continuous", label = "Continuous", status = "success", value = TRUE, width = "130px"),
                   actionButton("chat_submit", label = "Send", icon = icon("paper-plane"), width = "130px", style = "text-align: center;"),
                   div(style = "height:3px"),
                   actionButton("chat_clear", label = "Clear chat", icon = icon("rotate-right"), width = "130px", style = "text-align: center;")
@@ -256,8 +330,8 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
     observe({
       if (input$chat_input != "" && isFALSE(r$refresh)) {
         disable("chat_submit")
-        disable("chat_regenerate")
         disable("chat_continuous")
+        disable("hidden_repeat_button")
         r$room$chat_submit(prompt = input$chat_input, role = "user", continuous = input$chat_continuous)
         updateTextAreaInput(session, inputId = "chat_input", value = "")
         historyUI(div_update(r$room$history, openai_logo = openai_logo, user_logo = user_logo))
@@ -266,19 +340,54 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
       NULL
     }) %>% bindEvent(input$chat_submit)
 
+    confirmation <- reactiveVal()
     observe({
-      disable("chat_submit")
-      disable("chat_regenerate")
-      disable("chat_continuous")
-      r$room$chat_regenerate(continuous = input$chat_continuous)
-      r$refresh <- TRUE
+      if (!is.null(r$room$history)) {
+        disable("chat_submit")
+        disable("chat_continuous")
+        disable("hidden_repeat_button")
+        index <- as.numeric(input$hidden_repeat_text)
+        if (is.na(index)) {
+          index <- NULL
+          confirmation(TRUE)
+        } else {
+          ask_confirmation(
+            inputId = "confirmation",
+            text = "You'll lose all subsequent conversations.\nConfirm to regenerate this conversation?",
+            type = "warning",
+            btn_labels = c("No", "Yes"),
+            btn_colors = c("#6e7d88", "#04B404")
+          )
+        }
+      }
       NULL
-    }) %>% bindEvent(input$chat_regenerate)
+    }) %>% bindEvent(input$hidden_repeat_button)
+
+    observe({
+      if (isTRUE(input$confirmation)) {
+        confirmation(TRUE)
+      } else {
+        confirmation(FALSE)
+      }
+    }) %>% bindEvent(input$confirmation, ignoreNULL = TRUE)
+
+    observe({
+      if (isTRUE(confirmation())) {
+        index <- as.numeric(input$hidden_repeat_text)
+        if (is.na(index)) {
+          index <- NULL
+        }
+        r$room$chat_regenerate(index = index, continuous = input$chat_continuous)
+        historyUI(div_update(r$room$history, openai_logo = openai_logo, user_logo = user_logo))
+        r$refresh <- TRUE
+      }
+      NULL
+    }) %>% bindEvent(confirmation())
 
     observe({
       enable("chat_submit")
-      enable("chat_regenerate")
       enable("chat_continuous")
+      enable("hidden_repeat_button")
       r$room$chat_stop()
       r$refresh <- TRUE
       NULL
@@ -286,8 +395,8 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
 
     observe({
       enable("chat_submit")
-      enable("chat_regenerate")
       enable("chat_continuous")
+      enable("hidden_repeat_button")
       r$room$chat_clear()
       historyUI(div_update(NULL, openai_logo = openai_logo, user_logo = user_logo))
       r$refresh <- TRUE
@@ -296,25 +405,24 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
 
     observe({
       r$refresh <- !resolved(r$room$async)
-      if (is.null(r$room$history)) {
-        r$room$text <- welcome_message
-      }
       if (isTRUE(r$refresh)) {
         disable("chat_submit")
-        disable("chat_regenerate")
         disable("chat_continuous")
+        disable("hidden_repeat_button")
         invalidateLater(50)
         stopUI(div(
-          div(actionButton("chat_stop", label = "Stop generating", icon = icon("stop"), width = "150px"), style = "text-align: center;"),
+          actionButton("chat_stop", label = "Stop generating", icon = icon("stop"), width = "150px", class = "btn-danger", style = "color:white;text-align: center;"),
           div(style = "height:10px")
         ))
-        r$room$streaming()
-        outputUI(gsub("\\n$", "", markdown(r$room$text)))
       } else {
         enable("chat_submit")
-        enable("chat_regenerate")
         enable("chat_continuous")
+        enable("hidden_repeat_button")
         stopUI(NULL)
+      }
+      r$room$streaming()
+      if (is.null(r$room$history)) {
+        r$room$text <- welcome_message
       }
       outputUI(gsub("\\n$", "", markdown(r$room$text)))
       NULL

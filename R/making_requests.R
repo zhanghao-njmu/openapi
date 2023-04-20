@@ -72,10 +72,16 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
         NULL
       } else {
         for (content in split_content) {
-          if (!grepl("data: [DONE]", content, fixed = TRUE)) {
+          if (!grepl("^data: [DONE]", content, fixed = TRUE)) {
             content_json <- tryCatch(fromJSON(sub("([^\\{\\}]*)(\\{.*\\})([^\\{\\}]*)", "\\2", content), simplifyVector = FALSE), error = identity)
             if (!inherits(content_json, "error")) {
-              if (stream_type == "completion") {
+              if (!"choices" %in% names(content_json)) {
+                if (!is.null(stream_file)) {
+                  cat(paste0("An Error Occurred:\n", content, collapse = ""), file = stream_file, append = TRUE, sep = "")
+                } else {
+                  cat(paste0("An Error Occurred:\n", content, collapse = ""), sep = "")
+                }
+              } else if (stream_type == "completion") {
                 x_content <- content_json[["choices"]][[1]][["text"]]
                 stream_content <<- c(stream_content, x_content)
                 if (!is.null(stream_file)) {

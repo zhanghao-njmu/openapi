@@ -1,4 +1,4 @@
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Class definitions
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -425,19 +425,27 @@ ChatRoom <- R6Class(
       invisible(self)
     },
     chat_submit = function(prompt = NULL, role = "user", continuous = TRUE) {
+      if (inherits(self$async, "Future")) {
+        self$chat <- value(self$async)
+      }
       self$history <- c(self$history, list(list("role" = role, "content" = prompt, "time" = as.character(Sys.time()))))
       writeLines("", self$stream_file)
       chatgpt <- self$chat
       self$async <- future(chatgpt$chat(prompt, continuous = continuous), seed = NULL)
       invisible(self)
     },
-    chat_regenerate = function(continuous = TRUE) {
+    chat_regenerate = function(index = NULL, continuous = TRUE) {
       if (inherits(self$async, "Future")) {
         self$chat <- value(self$async)
       }
-      self$history <- self$history[-length(self$history)]
+      if (is.null(index) || isTRUE(index == 1)) {
+        self$history <- self$history[-length(self$history)]
+      } else {
+        self$history <- self$history[1:(index - 1)]
+      }
       writeLines("", self$stream_file)
       chatgpt <- self$chat
+      chatgpt$index <- index
       self$async <- future(chatgpt$regenerate(continuous = continuous), seed = NULL)
       invisible(self)
     },
@@ -445,6 +453,7 @@ ChatRoom <- R6Class(
       if (inherits(self$async, "Future")) {
         self$async$process$kill()
         self$text <- paste0(self$text, "[The message was interrupted]")
+        writeLines(self$text, self$stream_file)
         self$history <- c(self$history, list(list("role" = "assistant", "content" = self$text, "time" = as.character(Sys.time()))))
         self$chat$messages <- self$history
         self$chat$index <- length(self$chat$messages)

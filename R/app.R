@@ -76,6 +76,7 @@ ChatGPT_app <- function(db = NULL, ...) {
   }
 
   # colors <- c(dark = "#202123", darkchat = "#353541", lightchat = "#4D4F5C", input = "#41404e")
+  addResourcePath("lib", system.file("lib", package = "openapi"))
   openai_path <- system.file("icons", "openai-icon.svg", package = "openapi")
   openai_logo <- readLines(openai_path, warn = FALSE)
   user_path <- system.file("icons", "user-icon.svg", package = "openapi")
@@ -96,6 +97,11 @@ ChatGPT_app <- function(db = NULL, ...) {
       )
     )),
     sidebar = dashboardSidebar(
+      tags$head(
+        tags$style(HTML("
+                      .sidebar { height: 90vh; overflow-y: auto; }
+                      "))
+      ),
       sidebarMenu(
         id = "menu",
         menuItem(
@@ -118,29 +124,40 @@ ChatGPT_app <- function(db = NULL, ...) {
     skin = "black-light",
     dashboardBody(
       useShinyjs(),
+      tags$style(
+        HTML(
+          "
+          .box {
+          background: #F5F5F5;
+          border-radius: 5px;
+          }
+          "
+        )
+      ),
+      div(
+        style = "display:none;",
+        actionButton("hidden_repeat_button", label = NULL),
+        textInput("hidden_repeat_text", value = NULL, label = NULL)
+      ),
       box(
         width = 12,
         title = "Chat Room",
         status = "primary",
         solidHeader = FALSE,
         collapsible = TRUE,
-        fillCol(
-          flex = NA,
+        fillPage(
+          # div(style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;",
+          tags$style(type = "text/css", "#chat_output_container {height: calc(100vh - 300px) !important;}"),
           div(
-            id = "chat_output_container", style = "height: 100%; max-height: 100%; overflow-y: auto;",
+            id = "chat_output_container", style = "overflow-y: auto;",
             uiOutput("chat_output"),
-            div(style = "border-bottom: 1px solid #ccc;"),
-            div(style = "height:5px;"),
-            div(actionButton("chat_regenerate", label = "Regenerate", icon = icon("repeat"), width = "120px"), style = "float: right;"),
-            div(style = "height:50px")
-            # div(style = "border-top: 2px solid #202123"),
-            # div(style = "height:5px;")
+            div(style = "height:30px;")
           ),
           div(
-            id = "chat_input_container", style = "bottom: 0; height: 100%; max-height: 100%; width: 100%;",
-            uiOutput("chat_stop_ui"),
-            div(style = "border-top: 2px solid #202123"),
-            div(style = "height:10px"),
+            id = "chat_input_container", style = "bottom: 0;",
+            uiOutput("chat_stop_ui", style = "position: absolute; bottom: 100px; left: 50%;transform: translate(-50%, -50%); z-index: 999;"),
+            div(style = "border-top: 2px solid #202123;"),
+            div(style = "height:10px;"),
             fillRow(
               flex = c(1, NA),
               tagAppendAttributes(
@@ -192,9 +209,8 @@ ChatGPT_app <- function(db = NULL, ...) {
                 ),
                 "data-proxy-click" = "chat_submit"
               ),
-              fillCol(
-                flex = NA,
-                materialSwitch("chat_continuous", label = "Continuous", status = "primary", value = TRUE, width = "130px"),
+              div(
+                materialSwitch("chat_continuous", label = "Continuous", status = "success", value = TRUE, width = "130px"),
                 actionButton("chat_submit", label = "Send", icon = icon("paper-plane"), width = "130px", style = "text-align: center;"),
                 div(style = "height:3px"),
                 actionButton("chat_clear", label = "Clear chat", icon = icon("rotate-right"), width = "130px", style = "text-align: center;")
@@ -322,8 +338,8 @@ ChatGPT_app <- function(db = NULL, ...) {
     observe({
       if (input$chat_input != "" && isFALSE(r$refresh)) {
         disable("chat_submit")
-        disable("chat_regenerate")
         disable("chat_continuous")
+        disable("hidden_repeat_button")
         r$rooms$room_current()$chat_submit(prompt = input$chat_input, role = "user", continuous = input$chat_continuous)
         updateTextAreaInput(session, inputId = "chat_input", value = "")
         historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
@@ -332,19 +348,54 @@ ChatGPT_app <- function(db = NULL, ...) {
       NULL
     }) %>% bindEvent(input$chat_submit)
 
+    confirmation <- reactiveVal()
     observe({
-      disable("chat_submit")
-      disable("chat_regenerate")
-      disable("chat_continuous")
-      r$rooms$room_current()$chat_regenerate(continuous = input$chat_continuous)
-      r$refresh <- TRUE
+      if (!is.null(r$rooms$room_current()$history)) {
+        disable("chat_submit")
+        disable("chat_continuous")
+        disable("hidden_repeat_button")
+        index <- as.numeric(input$hidden_repeat_text)
+        if (is.na(index)) {
+          index <- NULL
+          confirmation(TRUE)
+        } else {
+          ask_confirmation(
+            inputId = "confirmation",
+            text = "You'll lose all subsequent conversations.\nConfirm to regenerate this conversation?",
+            type = "warning",
+            btn_labels = c("No", "Yes"),
+            btn_colors = c("#6e7d88", "#04B404")
+          )
+        }
+      }
       NULL
-    }) %>% bindEvent(input$chat_regenerate)
+    }) %>% bindEvent(input$hidden_repeat_button)
+
+    observe({
+      if (isTRUE(input$confirmation)) {
+        confirmation(TRUE)
+      } else {
+        confirmation(FALSE)
+      }
+    }) %>% bindEvent(input$confirmation, ignoreNULL = TRUE)
+
+    observe({
+      if (isTRUE(confirmation())) {
+        index <- as.numeric(input$hidden_repeat_text)
+        if (is.na(index)) {
+          index <- NULL
+        }
+        r$rooms$room_current()$chat_regenerate(index = index, continuous = input$chat_continuous)
+        historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
+        r$refresh <- TRUE
+      }
+      NULL
+    }) %>% bindEvent(confirmation())
 
     observe({
       enable("chat_submit")
-      enable("chat_regenerate")
       enable("chat_continuous")
+      enable("hidden_repeat_button")
       r$rooms$room_current()$chat_stop()
       r$refresh <- TRUE
       NULL
@@ -352,8 +403,8 @@ ChatGPT_app <- function(db = NULL, ...) {
 
     observe({
       enable("chat_submit")
-      enable("chat_regenerate")
       enable("chat_continuous")
+      enable("hidden_repeat_button")
       r$rooms$room_current()$chat_clear()
       historyUI(div_update(NULL, openai_logo = openai_logo, user_logo = user_logo))
       r$refresh <- TRUE
@@ -362,24 +413,24 @@ ChatGPT_app <- function(db = NULL, ...) {
 
     observe({
       r$refresh <- !resolved(r$rooms$room_current()$async)
-      if (is.null(r$rooms$room_current()$history)) {
-        r$rooms$rooms[[r$rooms$current]]$text <- welcome_message
-      }
       if (isTRUE(r$refresh)) {
         disable("chat_submit")
-        disable("chat_regenerate")
         disable("chat_continuous")
+        disable("hidden_repeat_button")
         invalidateLater(50)
         stopUI(div(
-          div(actionButton("chat_stop", label = "Stop generating", icon = icon("stop"), width = "150px"), style = "text-align: center;"),
+          actionButton("chat_stop", label = "Stop generating", icon = icon("stop"), width = "150px", class = "btn-danger", style = "color:white;text-align: center;"),
           div(style = "height:10px")
         ))
-        r$rooms$room_current()$streaming()
       } else {
         enable("chat_submit")
-        enable("chat_regenerate")
         enable("chat_continuous")
+        enable("hidden_repeat_button")
         stopUI(NULL)
+      }
+      r$rooms$room_current()$streaming()
+      if (is.null(r$rooms$room_current()$history)) {
+        r$rooms$rooms[[r$rooms$current]]$text <- welcome_message
       }
       outputUI(gsub("\\n$", "", markdown(r$rooms$room_current()$text)))
       NULL
