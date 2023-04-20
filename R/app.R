@@ -64,8 +64,13 @@ ChatGPT_app <- function(db = NULL, ...) {
   args[["key_nm"]] <- args[["key_nm"]] %||% getOption("openapi_key_nm")
   args[["organization"]] <- args[["organization"]] %||% getOption("openapi_organization")
   args[["organization_nm"]] <- args[["organization_nm"]] %||% getOption("openapi_organization_nm")
+  args <- args[setdiff(names(args), "db")]
+  chat_params <- getOption("openapi_chat_params") %||% list()
+  for (nm in names(args)) {
+    chat_params[[nm]] <- args[[nm]]
+  }
 
-  if (is.null(args[["api_url"]]) || is.null(args[["api_key"]])) {
+  if (is.null(chat_params[["api_url"]]) || is.null(chat_params[["api_key"]])) {
     warning("api_url or api_key is not defined, please run the api_setup function to configure them.")
     stopApp()
   }
@@ -153,7 +158,7 @@ ChatGPT_app <- function(db = NULL, ...) {
                     tags$style(
                       "#chat_input{color:white; background: #41404e; font-size:12px;
                         height:auto; min-height:100px; max-height: 100%;
-                        white-space: pre-wrap; overflow-wrap: break-word;}"
+                        white-space: normal; overflow-wrap: break-word;}"
                     )
                   ),
                   tags$script("
@@ -229,15 +234,14 @@ ChatGPT_app <- function(db = NULL, ...) {
       res_auth <- reactiveValues()
     }
 
-    args <- args[setdiff(names(args), "db")]
     r <- reactiveValues(
-      rooms = ChatRooms$new(chat_params = args),
+      rooms = ChatRooms$new(chat_params = chat_params),
       refresh = FALSE
     )
     menuUI <- reactiveVal(menus_create(names(isolate(r$rooms$rooms)), current = names(isolate(r$rooms$rooms))[1]))
-    stopUI <- reactiveVal()
     historyUI <- reactiveVal(div_update(NULL, openai_logo = openai_logo, user_logo = user_logo))
     outputUI <- reactiveVal()
+    stopUI <- reactiveVal()
 
     observe({
       if (!is.null(db)) {
@@ -257,7 +261,7 @@ ChatGPT_app <- function(db = NULL, ...) {
               if (length(messages) == 1 && is.na(messages[[1]][["content"]])) {
                 messages <- NULL
               }
-              r$rooms$room_add(name = room_nm, chat_params = args, messages = messages, stream_file = stream_file)
+              r$rooms$room_add(name = room_nm, chat_params = chat_params, messages = messages, stream_file = stream_file)
               if (length(messages) > 1 && messages[[length(messages)]][["role"]] == "assistant") {
                 r$rooms$rooms[[room_nm]]$text <- messages[[length(messages)]][["content"]]
               }
@@ -272,7 +276,7 @@ ChatGPT_app <- function(db = NULL, ...) {
     })
 
     observe({
-      r$rooms$room_add(chat_params = args)
+      r$rooms$room_add(chat_params = chat_params)
       menuUI(menus_create(names(r$rooms$rooms), current = r$rooms$current))
       historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
       r$refresh <- TRUE

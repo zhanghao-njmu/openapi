@@ -243,8 +243,9 @@ ChatGPT <- R6Class(
     initial = list(),
     latest_response = NULL,
     index = NULL,
-    chat_params = list(),
-    initialize = function(act_as = NULL, messages = NULL, chat_params = list()) {
+    chat_params = NULL,
+    initialize = function(act_as = NULL, messages = NULL,
+                          chat_params = getOption("openapi_chat_params") %||% list()) {
       if (!is.null(act_as)) {
         matched <- agrep(pattern = act_as, x = prompts[["act"]], max.distance = 0.1, ignore.case = TRUE)
         if (length(matched) > 0) {
@@ -313,6 +314,9 @@ ChatGPT <- R6Class(
     },
     regenerate = function(continuous = TRUE) {
       if (length(self$messages) > 1) {
+        if (is.null(self$index)) {
+          self$index <- length(self$messages)
+        }
         self$messages <- self$messages[1:(self$index - 1)]
         if (!identical(self$messages[[length(self$messages)]][["role"]], "user")) {
           warning("No reply to be regenerated", immediate. = TRUE)
@@ -393,7 +397,9 @@ ChatRoom <- R6Class(
     history = NULL,
     text = NULL,
     async = NULL,
-    initialize = function(act_as = NULL, messages = NULL, chat_params = list(), stream_file = tempfile(fileext = ".streamfile.txt")) {
+    initialize = function(act_as = NULL, messages = NULL,
+                          chat_params = getOption("openapi_chat_params") %||% list(),
+                          stream_file = tempfile(fileext = ".streamfile.txt")) {
       plan(callr)
 
       chat_params[["api_url"]] <- chat_params[["api_url"]] %||% getOption("openapi_api_url")

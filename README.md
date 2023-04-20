@@ -64,7 +64,10 @@ api_setup(api_url = api_url, api_key = api_key, key_nm = "Authorization")
 ## Azure OpenAI API
 api_url <- "https://xxxxxx.openai.azure.com"
 api_key <- "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-api_setup(api_url = api_url, api_key = api_key, key_nm = "api-key")
+api_setup(
+  api_url = api_url, api_key = api_key, key_nm = "api-key",
+  chat_params = list(endpoint = "openai/deployments/gpt3/chat/completions?api-version=2023-03-15-preview")
+)
 ```
 
 # ChatGPT
@@ -85,19 +88,6 @@ q$latest_response
 ```
 
 ![ChatGPT_console](README/chatgpt_console_2x.gif)
-
-If you are using the Azure OpenAI API, you will need to update the
-endpoint. For example:
-
-``` r
-ChatGPT$new(chat_params = list(endpoint = "openai/deployments/gpt3/chat/completions?api-version=2023-03-15-preview"))
-```
-
-Or for `ChatGPT_app` function:
-
-``` r
-ChatGPT_app(endpoint = "openai/deployments/gpt3/chat/completions?api-version=2023-03-15-preview")
-```
 
 ## Interact with chatGPT within the RStudio’s viewer pane
 

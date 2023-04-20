@@ -66,7 +66,7 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
       file.create(stream_file, showWarnings = TRUE)
     }
     stream_fun <- function(x) {
-      split_content <- strsplit(ifelse(grepl("^data:", x), x, paste0(stream_residual, x)), "\n\n")[[1]]
+      split_content <- strsplit(ifelse(grepl("^data:", x), x, paste0(stream_residual, x)), "\\n\\n$")[[1]]
       split_content <- split_content[split_content != ""]
       if (is.null(split_content)) {
         NULL

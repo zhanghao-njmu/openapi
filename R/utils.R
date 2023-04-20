@@ -28,7 +28,7 @@
 #' @importFrom httr GET
 api_setup <- function(api_url = "https://api.openai.com", api_key = NULL, organization = NULL,
                       key_nm = "Authorization", organization_nm = "OpenAI-Organization",
-                      endpoint = NULL, check_url = TRUE) {
+                      chat_params = NULL, check_url = TRUE) {
   if (is.null(api_url)) {
     stop("Please specify the API URL.")
   }
@@ -40,9 +40,8 @@ api_setup <- function(api_url = "https://api.openai.com", api_key = NULL, organi
   options(openapi_key_nm = key_nm)
   options(openapi_organization = organization)
   options(openapi_organization_nm = organization_nm)
-  if (!is.null(endpoint)) {
-    options(openapi_endpoint = endpoint)
-  }
+  options(openapi_chat_params = chat_params)
+
   if (isTRUE(check_url)) {
     try_get(GET(api_url), error_message = paste0("Unable to establish a connection with api_url: ", api_url))
   }

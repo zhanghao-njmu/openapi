@@ -10,7 +10,7 @@ api_setup(
   organization = NULL,
   key_nm = "Authorization",
   organization_nm = "OpenAI-Organization",
-  endpoint = NULL,
+  chat_params = NULL,
   check_url = TRUE
 )
 }
