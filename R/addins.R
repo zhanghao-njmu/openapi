@@ -340,12 +340,13 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
       NULL
     }) %>% bindEvent(input$chat_submit)
 
-    confirmation <- reactiveVal()
+    confirmation <- reactiveVal(FALSE)
     observe({
       if (!is.null(r$room$history)) {
         disable("chat_submit")
         disable("chat_continuous")
         disable("hidden_repeat_button")
+        confirmation(FALSE)
         index <- as.numeric(input$hidden_repeat_text)
         if (is.na(index)) {
           index <- NULL
@@ -369,7 +370,7 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
       } else {
         confirmation(FALSE)
       }
-    }) %>% bindEvent(input$confirmation, ignoreNULL = TRUE)
+    }) %>% bindEvent(input$confirmation)
 
     observe({
       if (isTRUE(confirmation())) {

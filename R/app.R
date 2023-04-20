@@ -50,7 +50,7 @@ menus_create <- function(rooms, current = NULL) {
 #' @import shinydashboardPlus
 #' @importFrom shinydashboard dashboardBody sidebarMenu menuItem menuSubItem tabItems tabItem updateTabItems
 #' @importFrom shinyjs useShinyjs enable disable
-#' @importFrom shinyWidgets materialSwitch
+#' @importFrom shinyWidgets materialSwitch ask_confirmation
 #' @importFrom shinymanager secure_app secure_server check_credentials create_db
 #' @importFrom future plan future value resolved
 #' @importFrom future.callr callr
@@ -99,7 +99,7 @@ ChatGPT_app <- function(db = NULL, ...) {
     sidebar = dashboardSidebar(
       tags$head(
         tags$style(HTML("
-                      .sidebar { height: 90vh; overflow-y: auto; }
+                      .sidebar { height: 85vh; overflow-y: auto; }
                       "))
       ),
       sidebarMenu(
@@ -348,12 +348,13 @@ ChatGPT_app <- function(db = NULL, ...) {
       NULL
     }) %>% bindEvent(input$chat_submit)
 
-    confirmation <- reactiveVal()
+    confirmation <- reactiveVal(FALSE)
     observe({
       if (!is.null(r$rooms$room_current()$history)) {
         disable("chat_submit")
         disable("chat_continuous")
         disable("hidden_repeat_button")
+        confirmation(FALSE)
         index <- as.numeric(input$hidden_repeat_text)
         if (is.na(index)) {
           index <- NULL
@@ -377,7 +378,7 @@ ChatGPT_app <- function(db = NULL, ...) {
       } else {
         confirmation(FALSE)
       }
-    }) %>% bindEvent(input$confirmation, ignoreNULL = TRUE)
+    }) %>% bindEvent(input$confirmation)
 
     observe({
       if (isTRUE(confirmation())) {
