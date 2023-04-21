@@ -47,10 +47,10 @@ menus_create <- function(rooms, current = NULL) {
 }
 
 #' @import shiny
+#' @import shinyWidgets
 #' @import shinydashboardPlus
 #' @importFrom shinydashboard dashboardBody sidebarMenu menuItem menuSubItem tabItems tabItem updateTabItems
 #' @importFrom shinyjs useShinyjs enable disable
-#' @importFrom shinyWidgets materialSwitch ask_confirmation
 #' @importFrom shinymanager secure_app secure_server check_credentials create_db
 #' @importFrom future plan future value resolved
 #' @importFrom future.callr callr
