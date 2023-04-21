@@ -20,7 +20,7 @@ div_create <- function(messages, openai_logo, user_logo) {
           div(
             style = "display: flex; flex-direction: row; justify-content: flex-end;",
             div(
-              div(style = "height:20px; text-align: right;", time[i] %||% as.character(Sys.time())),
+              div(style = "height:20px;", time[i] %||% as.character(Sys.time())),
               div(
                 style = "display: flex; flex-direction: row; align-items: end; justify-content: flex-end;",
                 actionButton(
@@ -30,7 +30,7 @@ div_create <- function(messages, openai_logo, user_logo) {
                   onmouseout = "this.style.borderColor='transparent';this.style.opacity=0.3;",
                   style = "opacity: 0.3;margin:1px; padding:2px;background-color:transparent;border-color:transparent;"
                 ),
-                div(style = "text-align: right;", div(class = "chat_input", id = paste0("chat_input", i), gsub("\\n$", "", markdown(content[i]))))
+                div(style = "text-align: left;", div(class = "chat_input", id = paste0("chat_input", i), gsub("\\n$", "", markdown(content[i]))))
               )
             ),
             div(
@@ -139,13 +139,13 @@ div_update <- function(messages, openai_logo, user_logo) {
     tagList(
       tags$head(tags$style(
         paste0(".chat_input {background-color: #95EC69;
-                    padding: 10px 10px 0 10px; border-radius: 5px; text-align: right;
-                    white-space: normal; overflow-wrap: break-word; display: inline-block;}")
+                    padding: 10px 10px 0 10px; border-radius: 5px; white-space: normal;
+                   word-wrap: break-word; overflow-wrap: break-word; display: inline-block;}")
       )),
       tags$head(tags$style(
         paste0(".chat_output {background-color: #FFFFFF;
-                   padding: 10px 10px 0 10px; border-radius: 5px; text-align: left;
-                   white-space: normal; overflow-wrap: break-word; display: inline-block;}")
+                   padding: 10px 10px 0 10px; border-radius: 5px; white-space: normal;
+                   word-wrap: break-word; overflow-wrap: break-word; display: inline-block;}")
       )),
       tags$head(
         tags$script(src = "lib/clipboard.min.js"),
@@ -370,6 +370,7 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
       } else {
         confirmation(FALSE)
       }
+      NULL
     }) %>% bindEvent(input$confirmation)
 
     observe({

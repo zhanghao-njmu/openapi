@@ -130,6 +130,10 @@ ChatGPT_app <- function(db = NULL, ...) {
           .box {
           background: #F5F5F5;
           border-radius: 5px;
+          max-width: 1280px;
+          position: relative;
+          left: 50%;
+          transform: translateX(-50%);
           }
           "
         )
@@ -144,9 +148,44 @@ ChatGPT_app <- function(db = NULL, ...) {
         title = "Chat Room",
         status = "primary",
         solidHeader = FALSE,
-        collapsible = TRUE,
+        collapsible = FALSE,
+        label = boxLabel(
+          text = "Parameters",
+          status = "warning"
+        ),
+        sidebar = boxSidebar(
+          id = "chat_params",
+          startOpen = FALSE,
+          width = 25,
+          pickerInput(
+            inputId = "chat_model",
+            label = "Model:",
+            choices = c("gpt-3.5-turbo", "gpt-4"),
+            selected = "gpt-3.5-turbo"
+          ),
+          sliderTextInput(
+            inputId = "chat_temperature",
+            label = "Temperature:",
+            selected = 1,
+            choices = seq(0, 2, length.out = 21),
+            grid = TRUE
+          ),
+          sliderTextInput(
+            inputId = "chat_presence_penalty",
+            label = "Presence penalty:",
+            selected = 0,
+            choices = seq(-2, 2, length.out = 21),
+            grid = TRUE
+          ),
+          sliderTextInput(
+            inputId = "chat_frequency_penalty",
+            label = "Frequency penalty:",
+            selected = 0,
+            choices = seq(-2, 2, length.out = 21),
+            grid = TRUE
+          )
+        ),
         fillPage(
-          # div(style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;",
           tags$style(type = "text/css", "#chat_output_container {height: calc(100vh - 300px) !important;}"),
           div(
             id = "chat_output_container", style = "overflow-y: auto;",
@@ -243,6 +282,8 @@ ChatGPT_app <- function(db = NULL, ...) {
   }
 
   server <- function(input, output, session) {
+    disable("chat_model")
+
     if (!is.null(db)) {
       res_auth <- secure_server(check_credentials(db = db))
       con <- dbConnect(SQLite(), db)
@@ -340,6 +381,9 @@ ChatGPT_app <- function(db = NULL, ...) {
         disable("chat_submit")
         disable("chat_continuous")
         disable("hidden_repeat_button")
+        r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["temperature"]] <- input$chat_temperature
+        r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["presence_penalty"]] <- input$chat_presence_penalty
+        r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["frequency_penalty"]] <- input$chat_frequency_penalty
         r$rooms$room_current()$chat_submit(prompt = input$chat_input, role = "user", continuous = input$chat_continuous)
         updateTextAreaInput(session, inputId = "chat_input", value = "")
         historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
@@ -378,6 +422,7 @@ ChatGPT_app <- function(db = NULL, ...) {
       } else {
         confirmation(FALSE)
       }
+      NULL
     }) %>% bindEvent(input$confirmation)
 
     observe({
@@ -386,6 +431,9 @@ ChatGPT_app <- function(db = NULL, ...) {
         if (is.na(index)) {
           index <- NULL
         }
+        r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["temperature"]] <- input$chat_temperature
+        r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["presence_penalty"]] <- input$chat_presence_penalty
+        r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["frequency_penalty"]] <- input$chat_frequency_penalty
         r$rooms$room_current()$chat_regenerate(index = index, continuous = input$chat_continuous)
         historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
         r$refresh <- TRUE

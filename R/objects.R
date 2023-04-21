@@ -425,9 +425,6 @@ ChatRoom <- R6Class(
       invisible(self)
     },
     chat_submit = function(prompt = NULL, role = "user", continuous = TRUE) {
-      if (inherits(self$async, "Future")) {
-        self$chat <- value(self$async)
-      }
       self$history <- c(self$history, list(list("role" = role, "content" = prompt, "time" = as.character(Sys.time()))))
       writeLines("", self$stream_file)
       chatgpt <- self$chat
@@ -435,9 +432,6 @@ ChatRoom <- R6Class(
       invisible(self)
     },
     chat_regenerate = function(index = NULL, continuous = TRUE) {
-      if (inherits(self$async, "Future")) {
-        self$chat <- value(self$async)
-      }
       if (is.null(index) || isTRUE(index == 1)) {
         self$history <- self$history[-length(self$history)]
       } else {
