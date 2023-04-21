@@ -47,10 +47,10 @@ menus_create <- function(rooms, current = NULL) {
 }
 
 #' @import shiny
-#' @import shinyWidgets
-#' @import shinydashboardPlus
-#' @importFrom shinydashboard dashboardBody sidebarMenu menuItem menuSubItem tabItems tabItem updateTabItems
+#' @importFrom shinydashboardPlus dashboardPage dashboardHeader dashboardSidebar dashboardControlbar boxLabel boxSidebar
+#' @importFrom shinydashboard dashboardBody sidebarMenu menuItem menuSubItem tabItems tabItem updateTabItems box
 #' @importFrom shinyjs useShinyjs enable disable
+#' @importFrom shinyWidgets pickerInput sliderTextInput materialSwitch ask_confirmation
 #' @importFrom shinymanager secure_app secure_server check_credentials create_db
 #' @importFrom future plan future value resolved
 #' @importFrom future.callr callr
@@ -86,7 +86,7 @@ ChatGPT_app <- function(db = NULL, ...) {
   \n\nPlease enter your questions or topics in the input box below and press \"Send\" button on the right to start chatting with the chatbot.
   \n\nHave a great time!"
 
-  ui <- shinydashboardPlus::dashboardPage(
+  ui <- dashboardPage(
     title = "ChatGPT",
     header = dashboardHeader(title = tagList(
       tags$span(
@@ -134,7 +134,6 @@ ChatGPT_app <- function(db = NULL, ...) {
           position: relative;
           left: 50%;
           transform: translateX(-50%);
-          overflow-y: visible;
           }
           "
         )
