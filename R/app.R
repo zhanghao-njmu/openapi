@@ -186,7 +186,7 @@ ChatGPT_app <- function(db = NULL, ...) {
           )
         ),
         fillPage(
-          tags$style(type = "text/css", "#chat_output_container {height: calc(100vh - 300px) !important;}"),
+          tags$style(type = "text/css", "#chat_output_container {height: calc(100vh - 290px) !important;}"),
           div(
             id = "chat_output_container", style = "overflow-y: auto;",
             uiOutput("chat_output"),
