@@ -211,6 +211,13 @@ ChatGPT_app <- function(db = NULL, ...) {
                     placeholder = "Enter your prompts here (Press Enter + Shift to start a new line)"
                   ),
                   tags$head(
+                    tags$style(HTML("
+                      .form-control:focus {
+                        box-shadow: 0px 0px 5px 1px #69666c;
+                      }
+                    "))
+                  ),
+                  tags$head(
                     tags$style(
                       "#chat_input{color:white; background: #41404e; font-size:12px;
                         height:auto; min-height:100px; max-height: 100%;
