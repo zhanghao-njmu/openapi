@@ -370,7 +370,7 @@ ChatGPT_app <- function(db = NULL, ...) {
 
     output$export <- downloadHandler(
       filename = function() {
-        paste("data-", r$rooms$current, "-", Sys.Date(), ".csv", sep = "")
+        paste("data-", r$rooms$current, "-", Sys.Date(), ".tsv", sep = "")
       },
       content = function(file) {
         room <- r$rooms$room_current()
