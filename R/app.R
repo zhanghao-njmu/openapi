@@ -56,7 +56,7 @@ menus_create <- function(rooms, current = NULL) {
 #' @importFrom future.callr callr
 #' @importFrom DBI dbConnect dbListTables dbReadTable dbWriteTable dbDisconnect
 #' @importFrom RSQLite SQLite
-#' @importFrom reactable reactableOutput renderReactable
+#' @importFrom reactable reactable reactableOutput renderReactable
 #' @export
 ChatGPT_app <- function(db = NULL, ...) {
   args <- as.list(match.call())[-1]
