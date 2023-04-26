@@ -30,7 +30,7 @@ div_create <- function(messages, openai_logo, user_logo) {
                   onmouseout = "this.style.borderColor='transparent';this.style.opacity=0.3;",
                   style = "opacity: 0.3;margin:1px; padding:2px;background-color:transparent;border-color:transparent;"
                 ),
-                div(style = "text-align: left;", div(class = "chat_input", id = paste0("chat_input", i), gsub("\\n$", "", markdown(content[i]))))
+                div(class = "chat_input", id = paste0("chat_input", i), content[i])
               )
             ),
             div(
@@ -54,7 +54,7 @@ div_create <- function(messages, openai_logo, user_logo) {
               div(style = "height:20px;", time[i] %||% as.character(Sys.time())),
               div(
                 style = "display: flex; flex-direction: row; align-items: end;",
-                div(style = "text-align: left;", div(class = "chat_output", id = paste0("chat_output", i), gsub("\\n$", "", markdown(content[i])))),
+                div(class = "chat_output", id = paste0("chat_output", i), gsub("\\n$", "", markdown(content[i]))),
                 actionButton(
                   inputId = paste0("copy", "output_", i), label = NULL, icon = icon("copy"),
                   class = "clipboardButton", `data-clipboard-target` = paste0("#chat_output", i),
@@ -102,7 +102,7 @@ div_create <- function(messages, openai_logo, user_logo) {
         div(style = "height:20px;", time_chat_output %||% as.character(Sys.time())),
         div(
           style = "display: flex; flex-direction: row; align-items: end;",
-          div(style = "text-align: left;", uiOutput(outputId = "chat_output_last", class = "chat_output")),
+          uiOutput(outputId = "chat_output_last", class = "chat_output"),
           actionButton(
             inputId = paste0("copy", "output_last"), label = NULL, icon = icon("copy"),
             class = "clipboardButton", `data-clipboard-target` = "#chat_output_last",
@@ -138,12 +138,12 @@ div_update <- function(messages, openai_logo, user_logo) {
   fluidPage(
     tagList(
       tags$head(tags$style(
-        paste0(".chat_input {background-color: #95EC69;
-                    padding: 10px 10px 0 10px; border-radius: 5px; white-space: normal;
+        paste0(".chat_input {background-color: #95EC69; text-align: left;
+                    padding: 10px 10px 10px 10px; border-radius: 5px; white-space: pre-wrap;
                    word-wrap: break-word; overflow-wrap: break-word; display: inline-block;}")
       )),
       tags$head(tags$style(
-        paste0(".chat_output {background-color: #FFFFFF;
+        paste0(".chat_output {background-color: #FFFFFF; text-align: left;
                    padding: 10px 10px 0 10px; border-radius: 5px; white-space: normal;
                    word-wrap: break-word; overflow-wrap: break-word; display: inline-block;}")
       )),
