@@ -47,8 +47,8 @@ menus_create <- function(rooms, current = NULL) {
 }
 
 #' @import shiny
-#' @importFrom shinydashboardPlus dashboardPage dashboardHeader dashboardSidebar dashboardControlbar boxLabel boxSidebar
-#' @importFrom shinydashboard dashboardBody sidebarMenu menuItem menuSubItem tabItems tabItem updateTabItems box
+#' @importFrom shinydashboard dashboardBody sidebarMenu menuItem menuSubItem tabItems tabItem updateTabItems
+#' @importFrom shinydashboardPlus dashboardPage dashboardHeader dashboardSidebar dashboardControlbar boxLabel boxSidebar box
 #' @importFrom shinyjs useShinyjs enable disable
 #' @importFrom shinyWidgets pickerInput sliderTextInput materialSwitch ask_confirmation
 #' @importFrom shinymanager secure_app secure_server check_credentials create_db
@@ -56,6 +56,7 @@ menus_create <- function(rooms, current = NULL) {
 #' @importFrom future.callr callr
 #' @importFrom DBI dbConnect dbListTables dbReadTable dbWriteTable dbDisconnect
 #' @importFrom RSQLite SQLite
+#' @importFrom reactable reactableOutput renderReactable
 #' @export
 ChatGPT_app <- function(db = NULL, ...) {
   args <- as.list(match.call())[-1]
@@ -86,7 +87,41 @@ ChatGPT_app <- function(db = NULL, ...) {
   \n\nPlease enter your questions or topics in the input box below and press \"Send\" button on the right to start chatting with the chatbot.
   \n\nHave a great time!"
 
-  ui <- dashboardPage(
+  parameters_UI <- boxSidebar(
+    id = "chat_params",
+    startOpen = FALSE,
+    width = 25,
+    selectInput(
+      inputId = "chat_model",
+      label = "Model:",
+      choices = c("gpt-3.5-turbo", "gpt-4"),
+      selected = "gpt-3.5-turbo"
+    ),
+    sliderTextInput(
+      inputId = "chat_temperature",
+      label = "Temperature:",
+      selected = 1,
+      choices = seq(0, 2, length.out = 21),
+      grid = TRUE
+    ),
+    sliderTextInput(
+      inputId = "chat_presence_penalty",
+      label = "Presence penalty:",
+      selected = 0,
+      choices = seq(-2, 2, length.out = 21),
+      grid = TRUE
+    ),
+    sliderTextInput(
+      inputId = "chat_frequency_penalty",
+      label = "Frequency penalty:",
+      selected = 0,
+      choices = seq(-2, 2, length.out = 21),
+      grid = TRUE
+    )
+  )
+  parameters_UI[[1]]$attribs$`data-original-title` <- "Parameters"
+
+  ui <- shinydashboardPlus::dashboardPage(
     title = "ChatGPT",
     header = dashboardHeader(title = tagList(
       tags$span(
@@ -143,7 +178,7 @@ ChatGPT_app <- function(db = NULL, ...) {
         actionButton("hidden_repeat_button", label = NULL),
         textInput("hidden_repeat_text", value = NULL, label = NULL)
       ),
-      box(
+      shinydashboardPlus::box(
         width = 12,
         title = "Chat Room",
         status = "primary",
@@ -153,49 +188,34 @@ ChatGPT_app <- function(db = NULL, ...) {
           text = "Parameters",
           status = "warning"
         ),
-        sidebar = boxSidebar(
-          id = "chat_params",
-          startOpen = FALSE,
-          width = 25,
-          pickerInput(
-            inputId = "chat_model",
-            label = "Model:",
-            choices = c("gpt-3.5-turbo", "gpt-4"),
-            selected = "gpt-3.5-turbo"
-          ),
-          sliderTextInput(
-            inputId = "chat_temperature",
-            label = "Temperature:",
-            selected = 1,
-            choices = seq(0, 2, length.out = 21),
-            grid = TRUE
-          ),
-          sliderTextInput(
-            inputId = "chat_presence_penalty",
-            label = "Presence penalty:",
-            selected = 0,
-            choices = seq(-2, 2, length.out = 21),
-            grid = TRUE
-          ),
-          sliderTextInput(
-            inputId = "chat_frequency_penalty",
-            label = "Frequency penalty:",
-            selected = 0,
-            choices = seq(-2, 2, length.out = 21),
-            grid = TRUE
-          )
-        ),
+        sidebar = parameters_UI,
         fillPage(
-          tags$style(type = "text/css", "#chat_output_container {height: calc(100vh - 290px) !important;}"),
+          tags$head(
+            tags$script(
+              "
+              Shiny.addCustomMessageHandler(\"scrollCallback\",
+                  function(x) {
+                    var objDiv = document.getElementById(\"chat_output_container\");
+                    objDiv.scrollTop = objDiv.scrollHeight;
+                  }
+              );"
+            )
+          ),
           div(
             id = "chat_output_container", style = "overflow-y: auto;",
             uiOutput("chat_output"),
             div(style = "height:30px;")
           ),
+          tags$style(type = "text/css", "#chat_output_container {height: calc(100vh - 330px) !important;}"),
           div(
             id = "chat_input_container", style = "bottom: 0;",
-            uiOutput("chat_stop_ui", style = "position: absolute; bottom: 100px; left: 50%;transform: translate(-50%, -50%); z-index: 999;"),
-            div(style = "border-top: 2px solid #202123;"),
+            uiOutput("chat_stop_ui", style = "position: absolute; bottom: 150px; left: 50%; transform: translate(-50%, -50%); z-index: 999;"),
+            div(style = "height:10px;border-top: 2px solid #202123;"),
+            div(
+              style = "display: flex; flex-direction: row; justify-content: center; gap: 20px; margin:0;",
+              actionButton("prompts", label = "Prompts", icon = icon("list")),
+              downloadButton("export", label = "Export", icon = icon("download"))
+            ),
             div(style = "height:10px;"),
             fillRow(
               flex = c(1, NA),
@@ -251,7 +271,15 @@ ChatGPT_app <- function(db = NULL, ...) {
                           }
                         );
                       });
-                    "))
+                    ")),
+                  tags$script(
+                    "
+                    Shiny.addCustomMessageHandler(\"focus\",
+                        function(id) {
+                          document.getElementById(id).focus();
+                        }
+                    );"
+                  )
                 ),
                 "data-proxy-click" = "chat_submit"
               ),
@@ -308,6 +336,57 @@ ChatGPT_app <- function(db = NULL, ...) {
     stopUI <- reactiveVal()
 
     observe({
+      showModal(modalDialog(
+        title = "Select a prompt",
+        reactableOutput("prompts_table"),
+        size = "l",
+        footer = tagList(
+          modalButton("Cancel"),
+          actionButton("prompts_select", "Select")
+        )
+      ))
+    }) %>% bindEvent(input$prompts)
+
+    output$prompts_table <- renderReactable(
+      reactable(prompts[, setdiff(colnames(prompts), "prompt"), drop = FALSE],
+        filterable = TRUE, searchable = TRUE, highlight = TRUE, striped = TRUE, compact = TRUE,
+        paginationType = "jump", showPageSizeOptions = TRUE,
+        details = function(index) prompts[index, "prompt"],
+        selection = "single", onClick = "select", defaultSelected = 1
+      )
+    )
+
+    observe({
+      selected <- getReactableState("prompts_table", "selected")
+      req(selected)
+      prompts_select <- prompts[selected, "prompt"]
+      updateTextAreaInput(inputId = "chat_input", value = prompts_select)
+      session$sendCustomMessage(type = "focus", message = "chat_input")
+      removeModal()
+    }) %>% bindEvent(input$prompts_select)
+
+    output$export <- downloadHandler(
+      filename = function() {
+        paste("data-", r$rooms$current, "-", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        room <- r$rooms$room_current()
+        nm <- r$rooms$current
+        if (is.null(room$history) || length(room$history) == 0) {
+          data <- data.frame(
+            role = "assistant", content = NA, time = NA,
+            stream_file = room$stream_file, room = nm
+          )
+        } else {
+          data <- do.call(rbind.data.frame, room$history)
+          data[["stream_file"]] <- room$stream_file
+          data[["room"]] <- nm
+        }
+        write.table(data, file, row.names = FALSE, fileEncoding = "Unicode", sep = "\t")
+      }
+    )
+
+    observe({
       if (!is.null(db)) {
         user <- res_auth[["user"]]
         if (paste0(user, "_data") %in% dbListTables(con)) {
@@ -320,6 +399,7 @@ ChatGPT_app <- function(db = NULL, ...) {
             for (room_nm in unique(userdata[["room"]])) {
               room <- data_rooms[[room_nm]]
               stream_file <- room[["stream_file"]][1]
+              current <- as.logical(room[["current"]][1])
               messages <- apply(room[, c("role", "content", "time"), drop = FALSE], 1, as.list)
               names(messages) <- NULL
               if (length(messages) == 1 && is.na(messages[[1]][["content"]])) {
@@ -329,7 +409,11 @@ ChatGPT_app <- function(db = NULL, ...) {
               if (length(messages) > 1 && messages[[length(messages)]][["role"]] == "assistant") {
                 r$rooms$rooms[[room_nm]]$text <- messages[[length(messages)]][["content"]]
               }
-              r$rooms$current <- names(r$rooms$rooms)[1]
+              if (identical(current, TRUE)) {
+                r$rooms$current <- room_nm
+              } else if (identical(current, logical(length = 0L))) {
+                r$rooms$current <- names(r$rooms$rooms)[1]
+              }
             }
           }
         }
@@ -358,17 +442,16 @@ ChatGPT_app <- function(db = NULL, ...) {
     }) %>% bindEvent(input$remove_chatroom)
 
     observe({
-      room_id <- input$menu %||% names(r$rooms$rooms)[1]
+      room_id <- input$menu %||% r$rooms$current
       r$rooms$current <- names(r$rooms$rooms)[as.numeric(gsub("room", "", room_id))]
       menuUI(menus_create(names(r$rooms$rooms), current = r$rooms$current))
       if (is.null(r$rooms$room_current()$history)) {
         r$rooms$rooms[[r$rooms$current]]$text <- welcome_message
         historyUI(div_update(NULL, openai_logo = openai_logo, user_logo = user_logo))
-        outputUI(gsub("\\n$", "", markdown(r$rooms$room_current()$text)))
       } else {
         historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
-        outputUI(gsub("\\n$", "", markdown(r$rooms$room_current()$text)))
       }
+      r$refresh <- TRUE
       NULL
     }) %>% bindEvent(input$menu)
 
@@ -392,7 +475,7 @@ ChatGPT_app <- function(db = NULL, ...) {
         r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["presence_penalty"]] <- input$chat_presence_penalty
         r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["frequency_penalty"]] <- input$chat_frequency_penalty
         r$rooms$room_current()$chat_submit(prompt = input$chat_input, role = "user", continuous = input$chat_continuous)
-        updateTextAreaInput(session, inputId = "chat_input", value = "")
+        updateTextAreaInput(inputId = "chat_input", value = "")
         historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
         r$refresh <- TRUE
       }
@@ -489,6 +572,7 @@ ChatGPT_app <- function(db = NULL, ...) {
         r$rooms$rooms[[r$rooms$current]]$text <- welcome_message
       }
       outputUI(gsub("\\n$", "", markdown(r$rooms$room_current()$text)))
+      session$sendCustomMessage(type = "scrollCallback", 1)
       NULL
     })
 
@@ -512,18 +596,20 @@ ChatGPT_app <- function(db = NULL, ...) {
       function() {
         user <- isolate(res_auth[["user"]])
         rooms <- isolate(r$rooms$rooms)
+        current <- isolate(r$rooms$current)
         if (!is.null(db) & !is.null(user)) {
           data_list <- lapply(names(rooms), function(nm) {
             room <- rooms[[nm]]
             if (is.null(room$history) || length(room$history) == 0) {
               data <- data.frame(
                 role = "assistant", content = NA, time = NA,
-                stream_file = room$stream_file, room = nm
+                stream_file = room$stream_file, room = nm, current = identical(nm, current)
               )
             } else {
               data <- do.call(rbind.data.frame, room$history)
               data[["stream_file"]] <- room$stream_file
               data[["room"]] <- nm
+              data[["current"]] <- identical(nm, current)
             }
             return(data)
           })

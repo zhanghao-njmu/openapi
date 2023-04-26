@@ -153,6 +153,14 @@ div_update <- function(messages, openai_logo, user_logo) {
           "$(document).ready(function(){new ClipboardJS('.clipboardButton');});"
         ))
       ),
+      tags$head(
+        tags$script(HTML(
+          "$(document).ready(function() {
+                var div = document.getElementById(\"chat_output_container\");
+                div.scrollTop = div.scrollHeight;
+              });"
+        ))
+      ),
       div_create(messages, openai_logo = openai_logo, user_logo = user_logo)
     )
   )

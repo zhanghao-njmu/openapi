@@ -18,5 +18,4 @@ This function fetches chat prompts from Github for various languages.
 \examples{
 prompts <- fetch_prompts(language = "en")
 head(prompts)
-
 }

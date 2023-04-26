@@ -272,7 +272,7 @@ truncate_text <- function(text, max_length = 50) {
 #' @examples
 #' prompts <- fetch_prompts(language = "en")
 #' head(prompts)
-#'
+#' @importFrom jsonlite fromJSON
 #' @export
 fetch_prompts <- function(language = c("en", "zh")) {
   language <- match.arg(language)
@@ -288,6 +288,7 @@ fetch_prompts <- function(language = c("en", "zh")) {
     zh = do.call(rbind.data.frame, fromJSON(readLines(tmp), simplifyVector = FALSE))
   )
   data[["act"]] <- trimws(gsub("(Act as)|(\u5145\u5F53|\u62C5\u4EFB|\u4F5C\u4E3A|\u626E\u6F14)", "", data[["act"]]))
+  data[["language"]] <- language
   return(data)
 }
 
