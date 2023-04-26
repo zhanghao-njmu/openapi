@@ -244,14 +244,17 @@ ChatGPT_app <- function(db = NULL, ...) {
                         white-space: normal; overflow-wrap: break-word;}"
                     )
                   ),
-                  tags$script("
+                  tags$head(
+                    tags$script("
                       var textarea = document.getElementById(\"chat_input\");
                       textarea.addEventListener(\"input\", function() {
                           textarea.style.height = 'auto';
                           textarea.style.overflowY = 'hidden';
                           textarea.style.height = `${textarea.scrollHeight}px`;
-                      });"),
-                  tags$script(HTML("
+                      });")
+                  ),
+                  tags$head(
+                    tags$script(HTML("
                       $(function() {
                         var $els = $(\"[data-proxy-click]\");
                         $.each(
@@ -271,14 +274,16 @@ ChatGPT_app <- function(db = NULL, ...) {
                           }
                         );
                       });
-                    ")),
-                  tags$script(
-                    "
-                    Shiny.addCustomMessageHandler(\"focus\",
-                        function(id) {
-                          document.getElementById(id).focus();
-                        }
-                    );"
+                    "))
+                  ),
+                  tags$head(
+                    tags$script(HTML('
+                      $(document).on("shiny:connected", function() {
+                        Shiny.addCustomMessageHandler("focusTextInput", function(id) {
+                          $("#" + id).focus();
+                        });
+                      });
+                    '))
                   )
                 ),
                 "data-proxy-click" = "chat_submit"
@@ -361,8 +366,8 @@ ChatGPT_app <- function(db = NULL, ...) {
       req(selected)
       prompts_select <- prompts[selected, "prompt"]
       updateTextAreaInput(inputId = "chat_input", value = prompts_select)
-      session$sendCustomMessage(type = "focus", message = "chat_input")
       removeModal()
+      session$sendCustomMessage(type = "focusTextInput", message = "chat_input")
     }) %>% bindEvent(input$prompts_select)
 
     output$export <- downloadHandler(
@@ -374,12 +379,10 @@ ChatGPT_app <- function(db = NULL, ...) {
         nm <- r$rooms$current
         if (is.null(room$history) || length(room$history) == 0) {
           data <- data.frame(
-            role = "assistant", content = NA, time = NA,
-            stream_file = room$stream_file, room = nm
+            role = "assistant", content = NA, time = NA, room = nm
           )
         } else {
           data <- do.call(rbind.data.frame, room$history)
-          data[["stream_file"]] <- room$stream_file
           data[["room"]] <- nm
         }
         write.table(data, file, row.names = FALSE, fileEncoding = "Unicode", sep = "\t")
@@ -623,7 +626,7 @@ ChatGPT_app <- function(db = NULL, ...) {
       }
     )
 
-    session$allowReconnect(TRUE)
+    # session$allowReconnect(TRUE)
   }
 
   shinyApp(ui = ui, server = server)
