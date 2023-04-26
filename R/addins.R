@@ -20,7 +20,7 @@ div_create <- function(messages, openai_logo, user_logo) {
           div(
             style = "display: flex; flex-direction: row; justify-content: flex-end;",
             div(
-              div(style = "height:20px;", time[i] %||% as.character(Sys.time())),
+              div(style = "height:20px;text-align: right;", time[i] %||% as.character(Sys.time())),
               div(
                 style = "display: flex; flex-direction: row; align-items: end; justify-content: flex-end;",
                 actionButton(
