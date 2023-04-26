@@ -373,17 +373,27 @@ ChatGPT_app <- function(db = NULL, ...) {
         paste("data-", r$rooms$current, "-", Sys.Date(), ".tsv", sep = "")
       },
       content = function(file) {
-        room <- r$rooms$room_current()
-        nm <- r$rooms$current
-        if (is.null(room$history) || length(room$history) == 0) {
-          data <- data.frame(
-            role = "assistant", content = NA, time = NA, room = nm
-          )
-        } else {
-          data <- do.call(rbind.data.frame, room$history)
-          data[["room"]] <- nm
-        }
-        write.table(data, file, row.names = FALSE, fileEncoding = "Unicode", sep = "\t")
+        withProgress(
+          message = paste0("Downloading..."),
+          value = 0,
+          {
+            setProgress(1 / 10)
+            req(r)
+            room <- r$rooms$room_current()
+            nm <- r$rooms$current
+            if (is.null(room$history) || length(room$history) == 0) {
+              data <- data.frame(
+                role = "assistant", content = NA, time = NA, room = nm
+              )
+            } else {
+              data <- do.call(rbind.data.frame, room$history)
+              data[["room"]] <- nm
+            }
+            setProgress(5 / 10)
+            write.table(data, file, row.names = FALSE, fileEncoding = "Unicode", sep = "\t")
+            setProgress(1)
+          }
+        )
       }
     )
 
