@@ -2,7 +2,7 @@
 #'
 #' This function sets up the API URL, API key, and organization for OpenAI's services.
 #'
-#' @param api_url The URL of the OpenAI API. Default is "https://api.openai.com".
+#' @param api_base The URL of the OpenAI API. Default is "https://api.openai.com".
 #' @param api_key The API key for accessing the OpenAI API.
 #' @param organization The organization name associated with the OpenAI API key.
 #' @param check_url Logical to check the validity of the specified URL. Default is TRUE.
@@ -15,35 +15,39 @@
 #' @examples
 #' \dontrun{
 #' ## Official OpenAI API
-#' api_url <- "https://api.openai.com"
+#' api_base <- "https://api.openai.com"
 #' api_key <- "Bearer sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-#' api_setup(api_url = api_url, api_key = api_key)
+#' api_setup(api_base = api_base, api_key = api_key)
 #'
 #' ## Azure OpenAI API
-#' api_url <- "https://xxxxxx.openai.azure.com"
+#' api_base <- "https://xxxxxx.openai.azure.com"
 #' api_key <- "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-#' api_setup(api_url = api_url, api_key = api_key, key_nm = "api-key")
+#' api_setup(api_base = api_base, api_key = api_key, key_nm = "api-key")
 #' }
 #' @export
 #' @importFrom httr GET
-api_setup <- function(api_url = "https://api.openai.com", api_key = NULL, organization = NULL,
-                      key_nm = "Authorization", organization_nm = "OpenAI-Organization",
-                      chat_params = NULL, check_url = TRUE) {
-  if (is.null(api_url)) {
+api_setup <- function(api_base = "https://api.openai.com/v1", api_key = NULL, organization = NULL,
+                      api_type = c("open_ai", "azure"), api_version = NULL, azure_deployment = "openai/deployments/gpt3",
+                      check_url = TRUE) {
+  if (is.null(api_base)) {
     stop("Please specify the API URL.")
   }
   if (is.null(api_key)) {
     stop("Please obtain an API key from https://platform.openai.com/.")
   }
-  options(openapi_api_url = api_url)
+  api_type <- match.arg(api_type)
+  options(openapi_api_base = api_base)
   options(openapi_api_key = api_key)
-  options(openapi_key_nm = key_nm)
+  options(openapi_api_type = api_type)
+  options(openapi_api_version = switch(api_type,
+    "open_ai" = NULL,
+    "azure" = api_version %||% "2023-03-15-preview"
+  ))
   options(openapi_organization = organization)
-  options(openapi_organization_nm = organization_nm)
-  options(openapi_chat_params = chat_params)
+  options(openapi_azure_deployment = azure_deployment)
 
   if (isTRUE(check_url)) {
-    try_get(GET(api_url), error_message = paste0("Unable to establish a connection with api_url: ", api_url))
+    try_get(GET(api_base), error_message = paste0("Unable to establish a connection with api_base: ", api_base))
   }
   return(invisible(NULL))
 }

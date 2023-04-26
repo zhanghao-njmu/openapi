@@ -5,7 +5,7 @@
 \title{Create Transcription}
 \usage{
 create_transcription(
-  endpoint = "v1/audio/transcriptions",
+  endpoint = "audio/transcriptions",
   file,
   model = "whisper-1",
   prompt = NULL,
@@ -18,7 +18,7 @@ create_transcription(
 )
 }
 \arguments{
-\item{endpoint}{an endpoint url (default "v1/audio/transcriptions").}
+\item{endpoint}{an endpoint url (default "audio/transcriptions").}
 
 \item{file}{name and path of the audio file.}
 
@@ -37,7 +37,7 @@ only supports English ("en") or Mandarin ("zh") (default NULL)}
 
 \item{timeout}{maximum time to wait for a reponse (default 300).}
 
-\item{api_url}{base URL for the OpenAI API (default NULL).}
+\item{api_base}{base URL for the OpenAI API (default NULL).}
 
 \item{api_key}{An API Key is required to use this tool.}
 

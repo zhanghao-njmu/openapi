@@ -1,5 +1,5 @@
 #' @export
-create_fine_tune <- function(endpoint = "v1/fine-tunes",
+create_fine_tune <- function(endpoint = "fine-tunes",
                              training_file,
                              validation_file = NULL,
                              model = "curie",
@@ -41,7 +41,7 @@ create_fine_tune <- function(endpoint = "v1/fine-tunes",
 }
 
 #' @export
-list_fine_tunes <- function(endpoint = "v1/fine-tunes",
+list_fine_tunes <- function(endpoint = "fine-tunes",
                             max_tries = 1,
                             timeout = 300,
                             ...) {
@@ -56,7 +56,7 @@ list_fine_tunes <- function(endpoint = "v1/fine-tunes",
 }
 
 #' @export
-retrieve_fine_tunes <- function(endpoint = "v1/fine-tunes",
+retrieve_fine_tunes <- function(endpoint = "fine-tunes",
                                 fine_tune_id,
                                 max_tries = 1,
                                 timeout = 300,
@@ -72,7 +72,7 @@ retrieve_fine_tunes <- function(endpoint = "v1/fine-tunes",
 }
 
 #' @export
-cancel_fine_tunes <- function(endpoint = "v1/fine-tunes",
+cancel_fine_tunes <- function(endpoint = "fine-tunes",
                               fine_tune_id,
                               max_tries = 1,
                               timeout = 300,
@@ -88,7 +88,7 @@ cancel_fine_tunes <- function(endpoint = "v1/fine-tunes",
 }
 
 #' @export
-list_fine_tune_events <- function(endpoint = "v1/fine-tunes",
+list_fine_tune_events <- function(endpoint = "fine-tunes",
                                   fine_tune_id,
                                   stream = FALSE,
                                   max_tries = 1,
@@ -106,7 +106,7 @@ list_fine_tune_events <- function(endpoint = "v1/fine-tunes",
 }
 
 #' @export
-delete_fine_tune_model <- function(endpoint = "v1/models",
+delete_fine_tune_model <- function(endpoint = "models",
                                    model,
                                    max_tries = 1,
                                    timeout = 300,

@@ -4,16 +4,16 @@
 \alias{list_models}
 \title{List Models}
 \usage{
-list_models(endpoint = "v1/models", max_tries = 1, timeout = 300, ...)
+list_models(endpoint = "models", max_tries = 1, timeout = 300, ...)
 }
 \arguments{
-\item{endpoint}{The endpoint for the API request. Default is "v1/models"}
+\item{endpoint}{The endpoint for the API request. Default is "models"}
 
 \item{max_tries}{Maximum number of attempts for making the request. Default is 1.}
 
 \item{timeout}{Timeout limit for the API request in seconds. Default is 300.}
 
-\item{api_url}{The base URL of the OpenAI API. Default is NULL.}
+\item{api_base}{The base URL of the OpenAI API. Default is NULL.}
 
 \item{api_key}{Your API key for authentication. Default is NULL.}
 

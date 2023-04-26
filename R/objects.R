@@ -245,7 +245,7 @@ ChatGPT <- R6Class(
     index = NULL,
     chat_params = NULL,
     initialize = function(act_as = NULL, messages = NULL,
-                          chat_params = getOption("openapi_chat_params") %||% list()) {
+                          chat_params = list()) {
       if (!is.null(act_as)) {
         matched <- agrep(pattern = act_as, x = prompts[["act"]], max.distance = 0.1, ignore.case = TRUE)
         if (length(matched) > 0) {
@@ -398,18 +398,19 @@ ChatRoom <- R6Class(
     text = NULL,
     async = NULL,
     initialize = function(act_as = NULL, messages = NULL,
-                          chat_params = getOption("openapi_chat_params") %||% list(),
+                          chat_params = list(),
                           stream_file = tempfile(fileext = ".streamfile.txt")) {
       plan(callr)
 
-      chat_params[["api_url"]] <- chat_params[["api_url"]] %||% getOption("openapi_api_url")
+      chat_params[["api_base"]] <- chat_params[["api_base"]] %||% getOption("openapi_api_base")
       chat_params[["api_key"]] <- chat_params[["api_key"]] %||% getOption("openapi_api_key")
-      chat_params[["key_nm"]] <- chat_params[["key_nm"]] %||% getOption("openapi_key_nm")
       chat_params[["organization"]] <- chat_params[["organization"]] %||% getOption("openapi_organization")
-      chat_params[["organization_nm"]] <- chat_params[["organization_nm"]] %||% getOption("openapi_organization_nm")
+      chat_params[["api_type"]] <- chat_params[["api_type"]] %||% getOption("openapi_api_type")
+      chat_params[["api_version"]] <- chat_params[["api_version"]] %||% getOption("openapi_api_version")
+      chat_params[["azure_deployment"]] <- chat_params[["azure_deployment"]] %||% getOption("openapi_azure_deployment")
 
-      if (is.null(chat_params[["api_url"]]) || is.null(chat_params[["api_key"]])) {
-        stop("api_url or api_key is not defined, please run the api_setup function to configure them.")
+      if (is.null(chat_params[["api_base"]]) || is.null(chat_params[["api_key"]])) {
+        stop("api_base or api_key is not defined, please run the api_setup function to configure them.")
       }
 
       if (!file.exists(stream_file)) {

@@ -5,7 +5,7 @@
 \title{Create Translation}
 \usage{
 create_translation(
-  endpoint = "v1/audio/translations",
+  endpoint = "audio/translations",
   file,
   model = "whisper-1",
   prompt = NULL,
@@ -17,7 +17,7 @@ create_translation(
 )
 }
 \arguments{
-\item{endpoint}{A string indicating the API endpoint for making requests (default is "v1/audio/translations").}
+\item{endpoint}{A string indicating the API endpoint for making requests (default is "audio/translations").}
 
 \item{file}{A character string indicating the file path of the audio file to be translated.}
 
@@ -33,7 +33,7 @@ create_translation(
 
 \item{timeout}{A numeric value indicating the timeout limit in seconds for the API call (default is 300).}
 
-\item{api_url}{A string indicating the base URL of the OpenAI API (default is NULL).}
+\item{api_base}{A string indicating the base URL of the OpenAI API (default is NULL).}
 
 \item{api_key}{A string indicating the authentication key to use for requests (default is NULL).}
 

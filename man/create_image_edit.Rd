@@ -5,7 +5,7 @@
 \title{Create Image Edit}
 \usage{
 create_image_edit(
-  endpoint = "v1/images/edits",
+  endpoint = "images/edits",
   image,
   mask = NULL,
   prompt,
@@ -19,7 +19,7 @@ create_image_edit(
 )
 }
 \arguments{
-\item{endpoint}{endpoint for API request (default: "v1/images/edits")}
+\item{endpoint}{endpoint for API request (default: "images/edits")}
 
 \item{image}{raw image data or a file path to the image.}
 
@@ -39,7 +39,7 @@ create_image_edit(
 
 \item{timeout}{Maximum time to wait for response.}
 
-\item{api_url}{The API URL to query. The default value is "https://api.openai.com".}
+\item{api_base}{The API URL to query. The default value is "https://api.openai.com".}
 
 \item{api_key}{Authentication key for API.}
 

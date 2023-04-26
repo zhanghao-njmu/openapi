@@ -5,7 +5,7 @@
 \title{Create chat completions using the OpenAI API.}
 \usage{
 create_chat_completion(
-  endpoint = "v1/chat/completions",
+  endpoint = "chat/completions",
   model = "gpt-3.5-turbo",
   messages,
   temperature = 1,
@@ -24,7 +24,7 @@ create_chat_completion(
 )
 }
 \arguments{
-\item{endpoint}{Endpoint for the OpenAI API. Default is "v1/chat/completions".}
+\item{endpoint}{Endpoint for the OpenAI API. Default is "chat/completions".}
 
 \item{model}{ID of the GPT-3 model to be used. Default is "gpt-3.5-turbo".}
 
@@ -56,7 +56,7 @@ create_chat_completion(
 
 \item{...}{Additional arguments to be passed to 'making_requests()' function.}
 
-\item{api_url}{URL to the OpenAI API. Can be set to a custom endpoint. Default is NULL.}
+\item{api_base}{URL to the OpenAI API. Can be set to a custom endpoint. Default is NULL.}
 
 \item{api_key}{API key for authentication with the OpenAI API. Default is NULL.}
 

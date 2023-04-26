@@ -5,7 +5,7 @@
 \title{Create/Edit Text using OpenAI API}
 \usage{
 create_edit(
-  endpoint = "v1/edits",
+  endpoint = "edits",
   model = "text-davinci-edit-001",
   input = "",
   instruction,
@@ -18,7 +18,7 @@ create_edit(
 )
 }
 \arguments{
-\item{endpoint}{A character string indicating the endpoint for the OpenAI API. Default is "v1/edits".}
+\item{endpoint}{A character string indicating the endpoint for the OpenAI API. Default is "edits".}
 
 \item{model}{A character string describing the model to be used for text generation. Default is "text-davinci-edit-001".}
 
@@ -36,7 +36,7 @@ create_edit(
 
 \item{timeout}{An integer indicating the maximum wait time in seconds for the API to return a response. Default is 300.}
 
-\item{api_url}{A character string representing the URL for the OpenAI API. Default is NULL.}
+\item{api_base}{A character string representing the URL for the OpenAI API. Default is NULL.}
 
 \item{api_key}{A character string representing the API key. Default is NULL.}
 

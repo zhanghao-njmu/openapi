@@ -180,19 +180,21 @@ div_update <- function(messages, openai_logo, user_logo) {
 #' @export
 ChatGPT_gadget <- function(viewer = NULL, ...) {
   args <- as.list(match.call())[-1]
-  args[["api_url"]] <- args[["api_url"]] %||% getOption("openapi_api_url")
+  args[["api_base"]] <- args[["api_base"]] %||% getOption("openapi_api_base")
   args[["api_key"]] <- args[["api_key"]] %||% getOption("openapi_api_key")
-  args[["key_nm"]] <- args[["key_nm"]] %||% getOption("openapi_key_nm")
   args[["organization"]] <- args[["organization"]] %||% getOption("openapi_organization")
-  args[["organization_nm"]] <- args[["organization_nm"]] %||% getOption("openapi_organization_nm")
+  args[["api_type"]] <- args[["api_type"]] %||% getOption("openapi_api_type")
+  args[["api_version"]] <- args[["api_version"]] %||% getOption("openapi_api_version")
+  args[["azure_deployment"]] <- args[["azure_deployment"]] %||% getOption("openapi_azure_deployment")
+
   args <- args[setdiff(names(args), "viewer")]
-  chat_params <- getOption("openapi_chat_params") %||% list()
+  chat_params <- list()
   for (nm in names(args)) {
     chat_params[[nm]] <- args[[nm]]
   }
 
-  if (is.null(chat_params[["api_url"]]) || is.null(chat_params[["api_key"]])) {
-    warning("api_url or api_key is not defined, please run the api_setup function to configure them.")
+  if (is.null(chat_params[["api_base"]]) || is.null(chat_params[["api_key"]])) {
+    warning("api_base or api_key is not defined, please run the api_setup function to configure them.")
     stopApp()
   }
 
@@ -478,21 +480,23 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
 #' @export
 ChatGPT_job <- function(viewer = rstudioapi::viewer, ...) {
   args <- as.list(match.call())[-1]
-  args[["api_url"]] <- args[["api_url"]] %||% getOption("openapi_api_url")
+  args[["api_base"]] <- args[["api_base"]] %||% getOption("openapi_api_base")
   args[["api_key"]] <- args[["api_key"]] %||% getOption("openapi_api_key")
-  args[["key_nm"]] <- args[["key_nm"]] %||% getOption("openapi_key_nm")
   args[["organization"]] <- args[["organization"]] %||% getOption("openapi_organization")
-  args[["organization_nm"]] <- args[["organization_nm"]] %||% getOption("openapi_organization_nm")
+  args[["api_type"]] <- args[["api_type"]] %||% getOption("openapi_api_type")
+  args[["api_version"]] <- args[["api_version"]] %||% getOption("openapi_api_version")
+  args[["azure_deployment"]] <- args[["azure_deployment"]] %||% getOption("openapi_azure_deployment")
+
   args <- args[setdiff(names(args), "viewer")]
-  chat_params <- getOption("openapi_chat_params") %||% list()
+  chat_params <- list()
   for (nm in names(args)) {
     chat_params[[nm]] <- args[[nm]]
   }
 
-  if (is.null(chat_params[["api_url"]]) || is.null(chat_params[["api_key"]])) {
-    stop("api_url or api_key is not defined, please run the api_setup function to configure them.")
+  if (is.null(chat_params[["api_base"]]) || is.null(chat_params[["api_key"]])) {
+    stop("api_base or api_key is not defined, please run the api_setup function to configure them.")
   }
-  try_get(GET(chat_params[["api_url"]]), error_message = paste0("Unable to establish a connection with api_url: ", chat_params[["api_url"]]))
+  try_get(GET(chat_params[["api_base"]]), error_message = paste0("Unable to establish a connection with api_base: ", chat_params[["api_base"]]))
 
   jobscript <- tempfile(fileext = ".R")
   file.create(jobscript)
@@ -500,7 +504,7 @@ ChatGPT_job <- function(viewer = rstudioapi::viewer, ...) {
     deparse(substitute(
       do.call(openapi::ChatGPT_gadget, args = c(list(viewer = viewer), chat_params))
       #   openapi::ChatGPT_gadget(
-      #   viewer = viewer, api_url = api_url, api_key = api_key, key_nm = key_nm,
+      #   viewer = viewer, api_base = api_base, api_key = api_key, key_nm = key_nm,
       #   organization = organization, organization_nm = organization_nm
       # )
     )),

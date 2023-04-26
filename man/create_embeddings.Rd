@@ -5,7 +5,7 @@
 \title{Create embeddings using OpenAI API}
 \usage{
 create_embeddings(
-  endpoint = "v1/embeddings",
+  endpoint = "embeddings",
   model = "text-embedding-ada-002",
   input,
   user = NULL,
@@ -15,7 +15,7 @@ create_embeddings(
 )
 }
 \arguments{
-\item{endpoint}{The API endpoint. Default: "v1/embeddings".}
+\item{endpoint}{The API endpoint. Default: "embeddings".}
 
 \item{model}{The model used for generating embeddings. Default: "text-embedding-ada-002".}
 
@@ -27,7 +27,7 @@ create_embeddings(
 
 \item{timeout}{Timeout in seconds for the API request. Default: 300.}
 
-\item{api_url}{The OpenAI API URL. Default: NULL.}
+\item{api_base}{The OpenAI API URL. Default: NULL.}
 
 \item{api_key}{Optional API key for authentication.}
 

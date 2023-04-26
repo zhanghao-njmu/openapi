@@ -11,7 +11,7 @@
 #' @param stream_file A character string indicating the name and path of a file to write the response data to.
 #' @param post_type A character string, defaults to "application/json". Indicates the MIME type to be used as the content type of the request stream.
 #' @param response_type A character string, defaults to "application/json". Indicates the MIME type to be used as the content type of the server response.
-#' @param api_url A character string indicating the URL for the server endpoint.
+#' @param api_base A character string indicating the URL for the server endpoint.
 #' @param api_key A character string indicating the API key to use for authentication.
 #' @param organization A character string indicating the organization ID to use for authentication.
 #' @param key_nm A character string indicating the name of the authentication key in the headers.
@@ -26,30 +26,41 @@
 #' @importFrom RCurl curlPerform
 #' @importFrom jsonlite toJSON fromJSON
 #' @export
-making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/chat/completions",
+making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "chat/completions",
                             data = NULL, encode = "json",
                             stream = FALSE, stream_type = c("completion", "chat_completion"), stream_file = NULL,
                             post_type = "application/json", response_type = "application/json",
-                            api_url = NULL, api_key = NULL, organization = NULL, key_nm = NULL, organization_nm = NULL,
+                            api_base = NULL, api_key = NULL, api_type = NULL, api_version = NULL, organization = NULL,
+                            azure_deployment = NULL,
                             max_tries = 1, timeout = 300, debug = FALSE) {
   method <- match.arg(method)
   stream_type <- match.arg(stream_type)
-  api_url <- api_url %||% getOption("openapi_api_url")
+  api_base <- api_base %||% getOption("openapi_api_base")
   api_key <- api_key %||% getOption("openapi_api_key")
-  key_nm <- key_nm %||% getOption("openapi_key_nm")
   organization <- organization %||% getOption("openapi_organization")
-  organization_nm <- organization_nm %||% getOption("openapi_organization_nm")
-  if (is.null(api_url) || is.null(api_key)) {
-    stop("api_url or api_key is not defined, please run the api_setup function to configure them.")
+  api_type <- api_type %||% getOption("openapi_api_type")
+  api_version <- api_version %||% getOption("openapi_api_version")
+  azure_deployment <- azure_deployment %||% getOption("openapi_azure_deployment")
+
+  if (is.null(api_base) || is.null(api_key)) {
+    stop("api_base or api_key is not defined, please run the api_setup function to configure them.")
   }
-  url <- paste(api_url, endpoint, sep = "/")
+  if (identical(api_type, "open_ai")) {
+    url <- sprintf("%s/%s", api_base, endpoint)
+  } else if (identical(api_type, "azure")) {
+    url <- sprintf("%s/%s/%s?api-version=%s", api_base, azure_deployment, endpoint, api_version)
+  }
 
   headers <- add_headers("Content-Type" = post_type)
   if (!is.null(api_key)) {
-    headers[["headers"]][key_nm] <- api_key
+    if (identical(api_type, "open_ai")) {
+      headers[["headers"]]["Authorization"] <- paste0("Bearer ", api_key)
+    } else if (identical(api_type, "azure")) {
+      headers[["headers"]]["api-key"] <- api_key
+    }
   }
   if (!is.null(organization)) {
-    headers[["headers"]][organization_nm] <- organization
+    headers[["headers"]]["OpenAI-Organization"] <- organization
   }
   if (!is.null(data)) {
     args <- list(url = url, headers, body = data, encode = encode)
@@ -66,7 +77,7 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
       file.create(stream_file, showWarnings = TRUE)
     }
     stream_fun <- function(x) {
-      split_content <- strsplit(ifelse(grepl("^data:", x), x, paste0(stream_residual, x)), "\\n\\n$")[[1]]
+      split_content <- strsplit(ifelse(grepl("^data:", x), x, paste0(stream_residual, x)), "(\\n\\n$)|(\\n\\n(?=data:))", perl = TRUE)[[1]]
       split_content <- split_content[split_content != ""]
       if (is.null(split_content)) {
         NULL
@@ -111,8 +122,6 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
               stream_residual <<- content
               if (debug) {
                 cat(content, "\n", sep = "")
-                # assign("content", content, envir = .GlobalEnv)
-                # assign("content_json", content_json, envir = .GlobalEnv)
               } else {
                 NULL
               }
@@ -170,7 +179,6 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "v1/
     }
   } else {
     args <- c(args, list(timeout(timeout)))
-    # assign("args", args, envir = .GlobalEnv)
     resp <- try_get(do.call(method, args), max_tries = max_tries)
   }
 
@@ -243,13 +251,13 @@ parse_response <- function(resp, class = NULL) {
 #                             data = NULL, type = c("json", "multipart", "file", "form", "raw"),
 #                             stream = FALSE, stream_type = c("completion", "chat_completion"), stream_content = NULL,
 #                             post_type = "application/json", response_type = "application/json", ...,
-#                             api_url = NULL, api_key = NULL, organization = NULL, max_tries = 1) {
+#                             api_base = NULL, api_key = NULL, organization = NULL, max_tries = 1) {
 #   method <- match.arg(method)
 #   type <- match.arg(type)
-#   api_url <- api_url %||% getOption("openapi_api_url")
+#   api_base <- api_base %||% getOption("openapi_api_base")
 #   api_key <- api_key %||% getOption("openapi_api_key")
 #   organization <- organization %||% getOption("openapi_organization")
-#   url <- paste(api_url, endpoint, sep = "/")
+#   url <- paste(api_base, endpoint, sep = "/")
 #
 #   req <- request(url) %>% req_headers("Content-Type" = post_type)
 #   if (!is.null(api_key)) {

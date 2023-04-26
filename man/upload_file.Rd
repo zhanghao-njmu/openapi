@@ -5,7 +5,7 @@
 \title{Upload File to OpenAI API}
 \usage{
 upload_file(
-  endpoint = "v1/files",
+  endpoint = "files",
   file,
   purpose = "fine-tune",
   max_tries = 1,
@@ -14,7 +14,7 @@ upload_file(
 )
 }
 \arguments{
-\item{endpoint}{The API endpoint to use (default: "v1/files")}
+\item{endpoint}{The API endpoint to use (default: "files")}
 
 \item{file}{The file path to upload}
 
@@ -24,7 +24,7 @@ upload_file(
 
 \item{timeout}{The timeout value for the API call in seconds (default: 300)}
 
-\item{api_url}{The URL of the OpenAI API (default: NULL)}
+\item{api_base}{The URL of the OpenAI API (default: NULL)}
 
 \item{api_key}{The API key for accessing the OpenAI API (default: NULL)}
 

@@ -5,7 +5,7 @@
 \title{Create image using OpenAI's DALL-E API}
 \usage{
 create_image(
-  endpoint = "v1/images/generations",
+  endpoint = "images/generations",
   prompt,
   n = 1,
   size = c("1024x1024", "512x512", "256x256"),
@@ -17,7 +17,7 @@ create_image(
 )
 }
 \arguments{
-\item{endpoint}{the DALL-E API endpoint to use. Default is "v1/images/generations".}
+\item{endpoint}{the DALL-E API endpoint to use. Default is "images/generations".}
 
 \item{prompt}{the prompt to send to the API. Required.}
 
@@ -33,7 +33,7 @@ create_image(
 
 \item{timeout}{time in seconds to wait for the API response. Default is 300 seconds.}
 
-\item{api_url}{the url of the DALL-E API server. Optional.}
+\item{api_base}{the url of the DALL-E API server. Optional.}
 
 \item{api_key}{the API key to use for the API. Required.}
 

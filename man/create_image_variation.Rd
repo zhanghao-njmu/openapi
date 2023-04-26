@@ -5,7 +5,7 @@
 \title{Create Image Variation}
 \usage{
 create_image_variation(
-  endpoint = "v1/images/variations ",
+  endpoint = "images/variations ",
   image,
   n = 1,
   size = c("1024x1024", "512x512", "256x256"),
@@ -17,7 +17,7 @@ create_image_variation(
 )
 }
 \arguments{
-\item{endpoint}{The API endpoint to use (default is \code{"v1/images/variations"}).}
+\item{endpoint}{The API endpoint to use (default is \code{"images/variations"}).}
 
 \item{image}{The path to the image file.}
 
@@ -33,7 +33,7 @@ create_image_variation(
 
 \item{timeout}{The timeout for the request in seconds (default is 300).}
 
-\item{api_url}{The URL of the API (default is NULL).}
+\item{api_base}{The URL of the API (default is NULL).}
 
 \item{api_key}{The API key to use for authentication (default is NULL).}
 

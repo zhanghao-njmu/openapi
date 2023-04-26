@@ -1,6 +1,6 @@
 #' Create a completion using the OpenAI API.
 #'
-#' @param endpoint The endpoint of the API (default is "v1/completions").
+#' @param endpoint The endpoint of the API (default is "completions").
 #' @param model The ID of the model to use.
 #' @param prompt The prompt(s) to use.
 #' @param suffix The suffix(es) to use.
@@ -17,7 +17,7 @@
 #' @param best_of Return the N best completions
 #' @param logit_bias A dictionary of logit bias values to add to the logits of the token.
 #' @param user A unique identifier for the user requesting the completion.
-#' @param api_url The API URL to use (override the default URL).
+#' @param api_base The API URL to use (override the default URL).
 #' @param api_key The API key to use.
 #' @param organization The organization ID to use.
 #' @param max_tries The maximum number of times to try the request again in case of failure.
@@ -26,7 +26,7 @@
 #'
 #' @return Response object of class 'CompletionResponse'.
 #' @export
-create_completion <- function(endpoint = "v1/completions",
+create_completion <- function(endpoint = "completions",
                               model = "text-davinci-003",
                               prompt = "<|endoftext|>",
                               suffix = NULL,

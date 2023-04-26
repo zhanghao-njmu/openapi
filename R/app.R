@@ -60,19 +60,21 @@ menus_create <- function(rooms, current = NULL) {
 #' @export
 ChatGPT_app <- function(db = NULL, ...) {
   args <- as.list(match.call())[-1]
-  args[["api_url"]] <- args[["api_url"]] %||% getOption("openapi_api_url")
+  args[["api_base"]] <- args[["api_base"]] %||% getOption("openapi_api_base")
   args[["api_key"]] <- args[["api_key"]] %||% getOption("openapi_api_key")
-  args[["key_nm"]] <- args[["key_nm"]] %||% getOption("openapi_key_nm")
   args[["organization"]] <- args[["organization"]] %||% getOption("openapi_organization")
-  args[["organization_nm"]] <- args[["organization_nm"]] %||% getOption("openapi_organization_nm")
+  args[["api_type"]] <- args[["api_type"]] %||% getOption("openapi_api_type")
+  args[["api_version"]] <- args[["api_version"]] %||% getOption("openapi_api_version")
+  args[["azure_deployment"]] <- args[["azure_deployment"]] %||% getOption("openapi_azure_deployment")
+
   args <- args[setdiff(names(args), "db")]
-  chat_params <- getOption("openapi_chat_params") %||% list()
+  chat_params <- list()
   for (nm in names(args)) {
     chat_params[[nm]] <- args[[nm]]
   }
 
-  if (is.null(chat_params[["api_url"]]) || is.null(chat_params[["api_key"]])) {
-    warning("api_url or api_key is not defined, please run the api_setup function to configure them.")
+  if (is.null(chat_params[["api_base"]]) || is.null(chat_params[["api_key"]])) {
+    warning("api_base or api_key is not defined, please run the api_setup function to configure them.")
     stopApp()
   }
 
@@ -373,17 +375,27 @@ ChatGPT_app <- function(db = NULL, ...) {
         paste("data-", r$rooms$current, "-", Sys.Date(), ".tsv", sep = "")
       },
       content = function(file) {
-        room <- r$rooms$room_current()
-        nm <- r$rooms$current
-        if (is.null(room$history) || length(room$history) == 0) {
-          data <- data.frame(
-            role = "assistant", content = NA, time = NA, room = nm
-          )
-        } else {
-          data <- do.call(rbind.data.frame, room$history)
-          data[["room"]] <- nm
-        }
-        write.table(data, file, row.names = FALSE, fileEncoding = "Unicode", sep = "\t")
+        withProgress(
+          message = paste0("Downloading..."),
+          value = 0,
+          {
+            setProgress(1 / 10)
+            req(r)
+            room <- r$rooms$room_current()
+            nm <- r$rooms$current
+            if (is.null(room$history) || length(room$history) == 0) {
+              data <- data.frame(
+                role = "assistant", content = NA, time = NA, room = nm
+              )
+            } else {
+              data <- do.call(rbind.data.frame, room$history)
+              data[["room"]] <- nm
+            }
+            setProgress(5 / 10)
+            write.table(data, file, row.names = FALSE, fileEncoding = "Unicode", sep = "\t")
+            setProgress(1)
+          }
+        )
       }
     )
 

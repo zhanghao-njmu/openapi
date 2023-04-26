@@ -5,7 +5,7 @@
 \title{Retrieve File Content}
 \usage{
 retrieve_file_content(
-  endpoint = "v1/files",
+  endpoint = "files",
   file_id,
   max_tries = 1,
   timeout = 300,
@@ -13,7 +13,7 @@ retrieve_file_content(
 )
 }
 \arguments{
-\item{endpoint}{The API endpoint. Default is "v1/files".}
+\item{endpoint}{The API endpoint. Default is "files".}
 
 \item{file_id}{The ID of the file to be deleted.}
 

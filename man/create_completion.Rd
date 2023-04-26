@@ -5,7 +5,7 @@
 \title{Create a completion using the OpenAI API.}
 \usage{
 create_completion(
-  endpoint = "v1/completions",
+  endpoint = "completions",
   model = "text-davinci-003",
   prompt = "<|endoftext|>",
   suffix = NULL,
@@ -28,7 +28,7 @@ create_completion(
 )
 }
 \arguments{
-\item{endpoint}{The endpoint of the API (default is "v1/completions").}
+\item{endpoint}{The endpoint of the API (default is "completions").}
 
 \item{model}{The ID of the model to use.}
 
@@ -68,7 +68,7 @@ create_completion(
 
 \item{...}{Additional arguments to pass to making_requests().}
 
-\item{api_url}{The API URL to use (override the default URL).}
+\item{api_base}{The API URL to use (override the default URL).}
 
 \item{api_key}{The API key to use.}
 

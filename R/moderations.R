@@ -1,5 +1,5 @@
 #' @export
-create_moderation <- function(endpoint = "v1/moderations",
+create_moderation <- function(endpoint = "moderations",
                               input,
                               model = "text-moderation-latest",
                               max_tries = 1,

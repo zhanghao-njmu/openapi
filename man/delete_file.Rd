@@ -5,7 +5,7 @@
 \title{Delete a file from OpenAI API}
 \usage{
 delete_file(
-  endpoint = "v1/files",
+  endpoint = "files",
   file_id,
   purpose = "fine-tune",
   max_tries = 1,
@@ -14,7 +14,7 @@ delete_file(
 )
 }
 \arguments{
-\item{endpoint}{The API endpoint. Default is "v1/files".}
+\item{endpoint}{The API endpoint. Default is "files".}
 
 \item{file_id}{The ID of the file to be deleted.}
 
@@ -24,7 +24,7 @@ delete_file(
 
 \item{timeout}{The timeout in seconds for API requests. Default is 300 seconds.}
 
-\item{api_url}{The OpenAI API URL. Default is "NULL.}
+\item{api_base}{The OpenAI API URL. Default is "NULL.}
 
 \item{api_key}{The OpenAI API key. By default is NULL.}
 

@@ -6,7 +6,7 @@
 \usage{
 making_requests(
   method = c("POST", "GET", "DELETE"),
-  endpoint = "v1/chat/completions",
+  endpoint = "chat/completions",
   data = NULL,
   encode = "json",
   stream = FALSE,
@@ -14,11 +14,12 @@ making_requests(
   stream_file = NULL,
   post_type = "application/json",
   response_type = "application/json",
-  api_url = NULL,
+  api_base = NULL,
   api_key = NULL,
+  api_type = NULL,
+  api_version = NULL,
   organization = NULL,
-  key_nm = NULL,
-  organization_nm = NULL,
+  azure_deployment = NULL,
   max_tries = 1,
   timeout = 300,
   debug = FALSE
@@ -43,21 +44,21 @@ making_requests(
 
 \item{response_type}{A character string, defaults to "application/json". Indicates the MIME type to be used as the content type of the server response.}
 
-\item{api_url}{A character string indicating the URL for the server endpoint.}
+\item{api_base}{A character string indicating the URL for the server endpoint.}
 
 \item{api_key}{A character string indicating the API key to use for authentication.}
 
 \item{organization}{A character string indicating the organization ID to use for authentication.}
-
-\item{key_nm}{A character string indicating the name of the authentication key in the headers.}
-
-\item{organization_nm}{A character string indicating the name of the organization ID key in the headers.}
 
 \item{max_tries}{An integer, defaults to 1. The maximum number of times to try making the request before outputting an error.}
 
 \item{timeout}{An integer, defaults to 300 seconds. The maximum time in seconds allowed for making the request.}
 
 \item{debug}{A logical flag indicating whether to print debugging output or not. Defaults to \code{FALSE}.}
+
+\item{key_nm}{A character string indicating the name of the authentication key in the headers.}
+
+\item{organization_nm}{A character string indicating the name of the organization ID key in the headers.}
 }
 \value{
 A response object returned by the server endpoint.

@@ -4,16 +4,16 @@
 \alias{list_files}
 \title{List Files}
 \usage{
-list_files(endpoint = "v1/files", max_tries = 1, timeout = 300, ...)
+list_files(endpoint = "files", max_tries = 1, timeout = 300, ...)
 }
 \arguments{
-\item{endpoint}{The API endpoint. Default is "v1/files".}
+\item{endpoint}{The API endpoint. Default is "files".}
 
 \item{max_tries}{The maximum number of times to attempt the API call (default: 1)}
 
 \item{timeout}{The timeout value for the API call in seconds (default: 300)}
 
-\item{api_url}{The URL of the OpenAI API (default: NULL)}
+\item{api_base}{The URL of the OpenAI API (default: NULL)}
 
 \item{api_key}{The API key for accessing the OpenAI API (default: NULL)}
 

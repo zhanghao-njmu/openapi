@@ -5,17 +5,17 @@
 \title{API Setup}
 \usage{
 api_setup(
-  api_url = "https://api.openai.com",
+  api_base = "https://api.openai.com/v1",
   api_key = NULL,
   organization = NULL,
-  key_nm = "Authorization",
-  organization_nm = "OpenAI-Organization",
-  chat_params = NULL,
+  api_type = c("open_ai", "azure"),
+  api_version = NULL,
+  azure_deployment = "openai/deployments/gpt3",
   check_url = TRUE
 )
 }
 \arguments{
-\item{api_url}{The URL of the OpenAI API. Default is "https://api.openai.com".}
+\item{api_base}{The URL of the OpenAI API. Default is "https://api.openai.com".}
 
 \item{api_key}{The API key for accessing the OpenAI API.}
 
@@ -32,13 +32,13 @@ This function sets up the API URL, API key, and organization for OpenAI's servic
 \examples{
 \dontrun{
 ## Official OpenAI API
-api_url <- "https://api.openai.com"
+api_base <- "https://api.openai.com"
 api_key <- "Bearer sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-api_setup(api_url = api_url, api_key = api_key)
+api_setup(api_base = api_base, api_key = api_key)
 
 ## Azure OpenAI API
-api_url <- "https://xxxxxx.openai.azure.com"
+api_base <- "https://xxxxxx.openai.azure.com"
 api_key <- "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-api_setup(api_url = api_url, api_key = api_key, key_nm = "api-key")
+api_setup(api_base = api_base, api_key = api_key, key_nm = "api-key")
 }
 }

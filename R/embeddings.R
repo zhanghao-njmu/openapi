@@ -2,11 +2,11 @@
 #'
 #' This function uses the OpenAI API to create embeddings for the given input text.
 #'
-#' @param endpoint The API endpoint. Default: "v1/embeddings".
+#' @param endpoint The API endpoint. Default: "embeddings".
 #' @param model The model used for generating embeddings. Default: "text-embedding-ada-002".
 #' @param input The text input for which embeddings need to be generated.
 #' @param user Optional user identifier.
-#' @param api_url The OpenAI API URL. Default: NULL.
+#' @param api_base The OpenAI API URL. Default: NULL.
 #' @param api_key Optional API key for authentication.
 #' @param organization Optional organization identifier.
 #' @param max_tries Maximum number of attempts to make the API request in case of failure. Default: 1.
@@ -14,7 +14,7 @@
 #'
 #' @return An object of class "EmbeddingsResponse".
 #' @export
-create_embeddings <- function(endpoint = "v1/embeddings",
+create_embeddings <- function(endpoint = "embeddings",
                               model = "text-embedding-ada-002",
                               input,
                               user = NULL,

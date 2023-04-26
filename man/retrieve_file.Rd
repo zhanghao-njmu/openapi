@@ -4,16 +4,10 @@
 \alias{retrieve_file}
 \title{Retrieve a file based on the file ID}
 \usage{
-retrieve_file(
-  endpoint = "v1/files",
-  file_id,
-  max_tries = 1,
-  timeout = 300,
-  ...
-)
+retrieve_file(endpoint = "files", file_id, max_tries = 1, timeout = 300, ...)
 }
 \arguments{
-\item{endpoint}{The API endpoint. Default is "v1/files".}
+\item{endpoint}{The API endpoint. Default is "files".}
 
 \item{file_id}{The ID of the file to be deleted.}
 

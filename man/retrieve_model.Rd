@@ -5,7 +5,7 @@
 \title{Retrieve OpenAI Model}
 \usage{
 retrieve_model(
-  endpoint = "v1/models",
+  endpoint = "models",
   model = "text-davinci-003",
   max_tries = 1,
   timeout = 300,
@@ -13,7 +13,7 @@ retrieve_model(
 )
 }
 \arguments{
-\item{endpoint}{a character string indicating the endpoint, default is "v1/models"}
+\item{endpoint}{a character string indicating the endpoint, default is "models"}
 
 \item{model}{a character string indicating the model name, default is "text-davinci-003"}
 
@@ -21,7 +21,7 @@ retrieve_model(
 
 \item{timeout}{a numeric value indicating request timeout in seconds, default is 300}
 
-\item{api_url}{a character string indicating the OpenAI API URL, default is NULL}
+\item{api_base}{a character string indicating the OpenAI API URL, default is NULL}
 
 \item{api_key}{a character string for the OpenAI API key, default is NULL}
 
