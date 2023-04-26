@@ -244,15 +244,13 @@ ChatGPT_app <- function(db = NULL, ...) {
                         white-space: normal; overflow-wrap: break-word;}"
                     )
                   ),
-                  tags$head(
-                    tags$script("
-                      var textarea = document.getElementById(\"chat_input\");
-                      textarea.addEventListener(\"input\", function() {
-                          textarea.style.height = 'auto';
-                          textarea.style.overflowY = 'hidden';
-                          textarea.style.height = `${textarea.scrollHeight}px`;
-                      });")
-                  ),
+                  tags$script("
+                    var textarea = document.getElementById(\"chat_input\");
+                    textarea.addEventListener(\"input\", function() {
+                        textarea.style.height = 'auto';
+                        textarea.style.overflowY = 'hidden';
+                        textarea.style.height = `${textarea.scrollHeight}px`;
+                    });"),
                   tags$head(
                     tags$script(HTML("
                       $(function() {
