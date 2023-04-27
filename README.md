@@ -38,15 +38,15 @@ devtools::install_github("zhanghao-njmu/openapi")
 
 # Authentication
 
-To use openapi, the `api_URL` and `api_key` must be provided.
+To use openapi, the `api_base` and `api_key` must be provided.
 
 The `api_key` needs to be generated through one’s own OpenAI account.
-The default `api_url` is
+The default `api_base` is
 [https://api.openai.com](https://api.openai.com/), but it can also be
 set to other OpenAI API [reverse proxy
 addresses](https://github.com/imyuanx/chatgpt-proxy).
 
-With `api_setup` function, one can manually set the `api_url` and
+With `api_setup` function, one can manually set the `api_base` and
 `api_key`, and then all functions in openapi do not need to specify
 these two parameters.
 
@@ -57,16 +57,16 @@ One can also modify .Rprofile manually, for example, by setting
 library(openapi)
 
 ## Official OpenAI API
-api_url <- "https://api.openai.com"
-api_key <- "Bearer sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-api_setup(api_url = api_url, api_key = api_key, key_nm = "Authorization")
+api_base <- "https://api.openai.com/v1"
+api_key <- "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+api_setup(api_base = api_base, api_key = api_key)
 
 ## Azure OpenAI API
-api_url <- "https://xxxxxx.openai.azure.com"
+api_base <- "https://xxxxxx.openai.azure.com"
 api_key <- "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 api_setup(
-  api_url = api_url, api_key = api_key, key_nm = "api-key",
-  chat_params = list(endpoint = "openai/deployments/gpt3/chat/completions?api-version=2023-03-15-preview")
+  api_base = api_base, api_key = api_key,
+  api_type = "azure", azure_deployment = "openai/deployments/[your_deployment_name]", api_version = "2023-03-15-preview"
 )
 ```
 
