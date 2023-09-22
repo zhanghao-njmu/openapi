@@ -20,7 +20,7 @@ code_create_test(
 \item{...}{Additional arguments to pass to \code{\link{create_chat_completion}}}
 }
 \value{
-A \code{\link{TextEditing-class}} object
+A \code{\link{TextEditing}} object
 }
 \description{
 Given a code snippet, generates test units using the testthat package.

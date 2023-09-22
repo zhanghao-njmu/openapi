@@ -267,7 +267,7 @@ ChatGPT_app <- function(db = NULL, ...) {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 setTimeout(function() {
-                                 $proxy.click();
+                                  $proxy.click();
                                 }, 500);
                               }
                             });
@@ -291,6 +291,12 @@ ChatGPT_app <- function(db = NULL, ...) {
               div(
                 materialSwitch("chat_continuous", label = "Continuous", status = "success", value = TRUE, width = "130px"),
                 actionButton("chat_submit", label = "Send", icon = icon("paper-plane"), width = "130px", style = "text-align: center;"),
+                tags$script("
+                    var submitbutton = document.getElementById(\"chat_submit\");
+                    submitbutton.addEventListener(\"click\", function() {
+                        textarea.value = '';
+                        textarea.style.height = 'auto';
+                    });"),
                 div(style = "height:3px"),
                 actionButton("chat_clear", label = "Clear chat", icon = icon("rotate-right"), width = "130px", style = "text-align: center;")
               )
@@ -322,7 +328,7 @@ ChatGPT_app <- function(db = NULL, ...) {
   }
 
   server <- function(input, output, session) {
-    disable("chat_model")
+    # disable("chat_model")
 
     if (!is.null(db)) {
       res_auth <- secure_server(check_credentials(db = db))
@@ -464,7 +470,7 @@ ChatGPT_app <- function(db = NULL, ...) {
       } else {
         historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
       }
-      r$refresh <- TRUE
+      outputUI(gsub("\\n$", "", markdown(r$rooms$room_current()$text)))
       NULL
     }) %>% bindEvent(input$menu)
 
@@ -484,11 +490,11 @@ ChatGPT_app <- function(db = NULL, ...) {
         disable("chat_submit")
         disable("chat_continuous")
         disable("hidden_repeat_button")
+        r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["model"]] <- input$chat_model
         r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["temperature"]] <- input$chat_temperature
         r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["presence_penalty"]] <- input$chat_presence_penalty
         r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["frequency_penalty"]] <- input$chat_frequency_penalty
         r$rooms$room_current()$chat_submit(prompt = input$chat_input, role = "user", continuous = input$chat_continuous)
-        updateTextAreaInput(inputId = "chat_input", value = "")
         historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
         r$refresh <- TRUE
       }
@@ -534,6 +540,7 @@ ChatGPT_app <- function(db = NULL, ...) {
         if (is.na(index)) {
           index <- NULL
         }
+        r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["model"]] <- input$chat_model
         r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["temperature"]] <- input$chat_temperature
         r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["presence_penalty"]] <- input$chat_presence_penalty
         r$rooms$rooms[[r$rooms$current]]$chat$chat_params[["frequency_penalty"]] <- input$chat_frequency_penalty
@@ -558,7 +565,7 @@ ChatGPT_app <- function(db = NULL, ...) {
       enable("chat_continuous")
       enable("hidden_repeat_button")
       r$rooms$room_current()$chat_clear()
-      historyUI(div_update(NULL, openai_logo = openai_logo, user_logo = user_logo))
+      historyUI(div_update(r$rooms$room_current()$history, openai_logo = openai_logo, user_logo = user_logo))
       r$refresh <- TRUE
       NULL
     }) %>% bindEvent(input$chat_clear)

@@ -20,7 +20,7 @@ code_explain(
 \item{...}{Additional arguments to pass to \code{\link{create_chat_completion}}}
 }
 \value{
-A \code{\link{TextEditing-class}} object
+A \code{\link{TextEditing}} object
 }
 \description{
 Review the following R code and provide an explanation of how it works.

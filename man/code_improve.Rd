@@ -20,7 +20,7 @@ code_improve(
 \item{...}{Additional arguments to pass to \code{\link{create_chat_completion}}}
 }
 \value{
-A \code{\link{TextEditing-class}} object
+A \code{\link{TextEditing}} object
 }
 \description{
 This function takes R code as input and edits it to improve its efficiency.

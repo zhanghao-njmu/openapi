@@ -244,8 +244,7 @@ ChatGPT <- R6Class(
     latest_response = NULL,
     index = NULL,
     chat_params = NULL,
-    initialize = function(act_as = NULL, messages = NULL,
-                          chat_params = list()) {
+    initialize = function(act_as = NULL, messages = NULL, chat_params = list()) {
       if (!is.null(act_as)) {
         matched <- agrep(pattern = act_as, x = prompts[["act"]], max.distance = 0.1, ignore.case = TRUE)
         if (length(matched) > 0) {
@@ -460,9 +459,10 @@ ChatRoom <- R6Class(
       if (inherits(self$async, "Future")) {
         self$async$process$kill()
       }
+      self$text <- NULL
       self$async <- NULL
-      self$chat <- ChatGPT$new(act_as = self$chat$initial$act_as, messages = self$chat$initial$messages, chat_params = self$chat$chat_params)
       self$history <- NULL
+      self$chat <- ChatGPT$new(act_as = self$chat$initial$act_as, messages = self$chat$initial$messages, chat_params = self$chat$chat_params)
     },
     streaming = function() {
       text <- readLines(self$stream_file, warn = FALSE)
@@ -545,9 +545,160 @@ ChatRooms <- R6Class(
   )
 )
 
+# ChatPDF ----------------------------------------------------------------------------------
+#' @importFrom R6 R6Class
+#' @export
+ChatPDF <- R6Class(
+  classname = "ChatPDF",
+  public = list(
+    messages = NULL,
+    initial = list(),
+    latest_response = NULL,
+    index = NULL,
+    chat_params = NULL,
+    initialize = function(pdf) {
+      if (!is.null(act_as)) {
+        matched <- agrep(pattern = act_as, x = prompts[["act"]], max.distance = 0.1, ignore.case = TRUE)
+        if (length(matched) > 0) {
+          message("ChatGPT will act as a ", prompts[["act"]][matched[1]])
+          self$messages <- list(
+            list(
+              "role" = "system",
+              "content" = prompts[["prompt"]][matched[1]]
+            )
+          )
+        } else {
+          message("Couldn't find a built-in prompt for the role. Generating one instead...")
+          prompt <- generate_prompts(paste0("Act as a ", act_as))
+          self$messages <- list(
+            list(
+              "role" = "system",
+              "content" = prompt
+            )
+          )
+        }
+      } else if (!is.null(messages)) {
+        self$messages <- lapply(messages, function(x) list("role" = x[["role"]], "content" = x[["content"]]))
+      }
+      self$initial <- list(act_as = act_as, messages = messages)
+      self$chat_params <- chat_params
+      invisible(self)
+    },
+    chat = function(prompt = NULL, role = "user", continuous = TRUE) {
+      if (!is.null(prompt)) {
+        messages <- list(
+          list(
+            "role" = role,
+            "content" = paste0(prompt, collapse = " ")
+          )
+        )
+        if (isTRUE(continuous)) {
+          messages <- c(lapply(self$messages, function(x) list("role" = x[["role"]], "content" = x[["content"]])), messages)
+        }
+        chat_params <- self$chat_params
+        chat_params[["messages"]] <- messages
+        resp <- do.call(openapi::create_chat_completion, chat_params)
+        self$latest_response <- resp
+        if (inherits(resp, "CompletionResponse")) {
+          all_messages <- c(
+            lapply(self$messages, function(x) list("role" = x[["role"]], "content" = x[["content"]])),
+            list(
+              list(
+                "role" = role,
+                "content" = paste0(prompt, collapse = " ")
+              )
+            ),
+            list(
+              list(
+                "role" = "assistant",
+                "content" = self$latest_response$extract("choices")[1]
+              )
+            )
+          )
+          self$messages <- all_messages
+          self$index <- length(self$messages)
+        } else {
+          warning("An error occurred when generating the chat completion. Please check the parameters in the latest_response and try again later.", immediate. = TRUE)
+        }
+      }
+      invisible(self)
+    },
+    regenerate = function(continuous = TRUE) {
+      if (length(self$messages) > 1) {
+        if (is.null(self$index)) {
+          self$index <- length(self$messages)
+        }
+        self$messages <- self$messages[1:(self$index - 1)]
+        if (!identical(self$messages[[length(self$messages)]][["role"]], "user")) {
+          warning("No reply to be regenerated", immediate. = TRUE)
+        } else {
+          if (isTRUE(continuous)) {
+            messages <- self$messages
+          } else {
+            messages <- self$messages[length(self$messages)]
+          }
+          messages <- lapply(self$messages, function(x) list("role" = x[["role"]], "content" = x[["content"]]))
+          chat_params <- self$chat_params
+          chat_params[["messages"]] <- messages
+          resp <- do.call(openapi::create_chat_completion, chat_params)
+          self$latest_response <- resp
+          if (inherits(resp, "CompletionResponse")) {
+            all_messages <- c(
+              lapply(self$messages, function(x) list("role" = x[["role"]], "content" = x[["content"]])),
+              list(
+                list(
+                  "role" = "assistant",
+                  "content" = self$latest_response$extract("choices")[1]
+                )
+              )
+            )
+            self$messages <- all_messages
+            self$index <- length(self$messages)
+          } else {
+            warning("An error occurred when generating the chat completion. Please check the parameters in the latest_response and try again later.", immediate. = TRUE)
+          }
+        }
+      } else {
+        warning("No previous message.", immediate. = TRUE)
+      }
+      invisible(self)
+    },
+    first = function() {
+      self$index <- 1
+      messages <- self$messages[self$index]
+      cat(sprintf("index: %s\n{%s}\n\n", self$index, paste0(messages[[1]][["role"]], ": ", messages[[1]][["content"]])), sep = "")
+      return(invisible(messages[[1]][["content"]]))
+    },
+    last = function() {
+      self$index <- length(self$messages)
+      messages <- self$messages[self$index]
+      cat(sprintf("index: %s\n{%s}\n\n", self$index, paste0(messages[[1]][["role"]], ": ", messages[[1]][["content"]])), sep = "")
+      return(invisible(messages[[1]][["content"]]))
+    },
+    backward = function() {
+      self$index <- max(self$index - 1, 1)
+      messages <- self$messages[self$index]
+      cat(sprintf("index: %s\n{%s}\n\n", self$index, paste0(messages[[1]][["role"]], ": ", messages[[1]][["content"]])), sep = "")
+      return(invisible(messages[[1]][["content"]]))
+    },
+    forward = function() {
+      self$index <- min(self$index + 1, length(self$messages))
+      messages <- self$messages[self$index]
+      cat(sprintf("index: %s\n{%s}\n\n", self$index, paste0(messages[[1]][["role"]], ": ", messages[[1]][["content"]])), sep = "")
+      return(invisible(messages[[1]][["content"]]))
+    },
+    print = function() {
+      cat("Conversations:\n\n")
+      conversations <- sapply(self$messages, function(x) paste0(x[["role"]], ":\n", "{", x[["content"]], "}"))
+      cat(sprintf("%s\n\n", conversations), sep = "")
+      invisible(self)
+    }
+  )
+)
+
 # TextEditing ----------------------------------------------------------------------------------
 #' TextEditing
-#' An R6Class for text editing
+#' @description An R6Class for text editing
 #' @importFrom R6 R6Class
 #' @export
 TextEditing <- R6Class("TextEditing",

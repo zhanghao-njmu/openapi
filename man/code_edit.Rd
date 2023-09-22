@@ -18,7 +18,7 @@ code_edit(code, prompt, instruction, explain = TRUE, simplify = TRUE, ...)
 \item{...}{Additional arguments to pass to \code{\link{create_chat_completion}}}
 }
 \value{
-A \code{\link{TextEditing-class}} object
+A \code{\link{TextEditing}} object
 }
 \description{
 This function returns a text editing object that allows the user to edit R code based on a prompt and message from the system. The user can choose to receive explanation or not. The edited code is then compared to the original code and the differences are returned.

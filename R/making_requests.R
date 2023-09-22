@@ -92,7 +92,7 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "cha
                 } else {
                   cat(paste0("An Error Occurred:\n", content, collapse = ""), sep = "")
                 }
-              } else if (stream_type == "completion") {
+              } else if (stream_type == "completion" && length(content_json[["choice"]]) > 0) {
                 x_content <- content_json[["choices"]][[1]][["text"]]
                 stream_content <<- c(stream_content, x_content)
                 if (!is.null(stream_file)) {
@@ -100,7 +100,7 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "cha
                 } else {
                   cat(x_content, sep = "")
                 }
-              } else if (stream_type == "chat_completion") {
+              } else if (stream_type == "chat_completion" && length(content_json[["choices"]]) > 0) {
                 if ("role" %in% names(content_json[["choices"]][[1]][["delta"]])) {
                   if (debug) {
                     x_content <- content_json[["choices"]][[1]][["delta"]][["role"]]
@@ -109,7 +109,7 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "cha
                     NULL
                   }
                 } else {
-                  x_content <- content_json[["choices"]][[1]][["delta"]][["content"]]
+                  x_content <- content_json[["choices"]][[1]][["delta"]][["content"]] %||% content_json[["choices"]][[1]][["message"]][["content"]]
                   stream_content <<- c(stream_content, x_content)
                   if (!is.null(stream_file)) {
                     cat(paste0(x_content, collapse = ""), file = stream_file, append = TRUE, sep = "")

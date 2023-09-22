@@ -35,7 +35,7 @@ compare_text <- function(text1, text2) {
 #' @param explain Logical, indicating whether to include explanation messages
 #' @param ... Additional arguments to pass to \code{\link{create_chat_completion}}
 #'
-#' @return A \code{\link{TextEditing-class}} object
+#' @return A \code{\link{TextEditing}} object
 #'
 #' @export
 #'
@@ -69,7 +69,7 @@ code_edit <- function(code, prompt, instruction, explain = TRUE, simplify = TRUE
 #' Generate complete roxygen2 documentation for R code.
 #'
 #' @inheritParams code_edit
-#' @return A \code{\link{TextEditing-class}} object
+#' @return A \code{\link{TextEditing}} object
 #'
 #' @export
 code_document <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
@@ -88,7 +88,7 @@ code_document <- function(code, additional_instructions = NULL, explain = TRUE, 
 #'
 #' @inheritParams code_edit
 #'
-#' @return A \code{\link{TextEditing-class}} object
+#' @return A \code{\link{TextEditing}} object
 #'
 #' @export
 code_check <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
@@ -107,7 +107,7 @@ code_check <- function(code, additional_instructions = NULL, explain = TRUE, sim
 #'
 #' @inheritParams code_edit
 #'
-#' @return A \code{\link{TextEditing-class}} object
+#' @return A \code{\link{TextEditing}} object
 #'
 #' @export
 code_improve <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
@@ -124,7 +124,7 @@ code_improve <- function(code, additional_instructions = NULL, explain = TRUE, s
 #'
 #' @inheritParams code_edit
 #'
-#' @return A \code{\link{TextEditing-class}} object
+#' @return A \code{\link{TextEditing}} object
 #'
 #' @export
 code_comment <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
@@ -143,7 +143,7 @@ code_comment <- function(code, additional_instructions = NULL, explain = TRUE, s
 #'
 #' @inheritParams code_edit
 #'
-#' @return A \code{\link{TextEditing-class}} object
+#' @return A \code{\link{TextEditing}} object
 #'
 #' @export
 code_refactor <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
@@ -162,7 +162,7 @@ code_refactor <- function(code, additional_instructions = NULL, explain = TRUE, 
 #'
 #' @inheritParams code_edit
 #'
-#' @return A \code{\link{TextEditing-class}} object
+#' @return A \code{\link{TextEditing}} object
 #'
 #' @export
 code_explain <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
@@ -181,7 +181,7 @@ code_explain <- function(code, additional_instructions = NULL, explain = TRUE, s
 #'
 #' @inheritParams code_edit
 #'
-#' @return A \code{\link{TextEditing-class}} object
+#' @return A \code{\link{TextEditing}} object
 #'
 #' @export
 code_create_test <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {

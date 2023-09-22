@@ -20,7 +20,7 @@ code_document(
 \item{...}{Additional arguments to pass to \code{\link{create_chat_completion}}}
 }
 \value{
-A \code{\link{TextEditing-class}} object
+A \code{\link{TextEditing}} object
 }
 \description{
 Generate complete roxygen2 documentation for R code.

@@ -20,7 +20,7 @@ code_comment(
 \item{...}{Additional arguments to pass to \code{\link{create_chat_completion}}}
 }
 \value{
-A \code{\link{TextEditing-class}} object
+A \code{\link{TextEditing}} object
 }
 \description{
 Add inline comments to the following R code to improve its readability.

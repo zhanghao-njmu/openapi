@@ -2,13 +2,8 @@
 % Please edit documentation in R/objects.R
 \name{TextEditing}
 \alias{TextEditing}
-\title{TextEditing
-An R6Class for text editing}
+\title{TextEditing}
 \description{
-TextEditing
-An R6Class for text editing
-
-TextEditing
 An R6Class for text editing
 }
 \section{Methods}{

@@ -410,7 +410,7 @@ ChatGPT_gadget <- function(viewer = NULL, ...) {
       enable("chat_continuous")
       enable("hidden_repeat_button")
       r$room$chat_clear()
-      historyUI(div_update(NULL, openai_logo = openai_logo, user_logo = user_logo))
+      historyUI(div_update(r$room$history, openai_logo = openai_logo, user_logo = user_logo))
       r$refresh <- TRUE
       NULL
     }) %>% bindEvent(input$chat_clear)

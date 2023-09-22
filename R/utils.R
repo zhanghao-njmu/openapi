@@ -329,3 +329,24 @@ generate_prompts <- function(prompt = "Act as an R Package Development Assistant
   response <- create_chat_completion(messages = messages, ...)
   return(response$extract("choices")[1])
 }
+
+#' A collection of prompts
+#'
+#' @format A \code{data.frame} object.
+#' @concept data
+#' @source \url{https://raw.githubusercontent.com/f/awesome-chatgpt-prompts/main/prompts.csv} \url{https://raw.githubusercontent.com/PlexPt/awesome-chatgpt-prompts-zh/main/prompts-zh.json}
+#' @examples
+#' \dontrun{
+#' if (interactive()) {
+#'   prompts_zh <- fetch_prompts(language = "zh")
+#'   prompts_en <- fetch_prompts(language = "en")
+#'   prompt_custom <- data.frame(
+#'     act = "R Package Development Assistant",
+#'     prompt = "I want you to act as a knowledgeable R Package development assistant, capable of understanding all the nuances and intricacies of developing R packages. Enlighten me on where to start when developing a new R package, provide suggestions on which tools can help to simplify the process, the secrets of writing robust functions, how to document them along with the whole package, strategies to handle dependencies, and finally, how to test the package to ensure it is working correctly. Prepare for potential troubleshooting scenarios to guide me through to completion of the package.",
+#'     language = "en"
+#'   )
+#'   prompts <- do.call(rbind, list(prompts_zh, prompts_en, prompt_custom))
+#'   # usethis::use_data(prompts)
+#' }
+#' }
+"prompts"

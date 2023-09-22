@@ -20,7 +20,7 @@ code_refactor(
 \item{...}{Additional arguments to pass to \code{\link{create_chat_completion}}}
 }
 \value{
-A \code{\link{TextEditing-class}} object
+A \code{\link{TextEditing}} object
 }
 \description{
 This function takes in R code and refactors it to improve its efficiency and readability.
