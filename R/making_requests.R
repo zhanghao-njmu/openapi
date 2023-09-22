@@ -38,7 +38,7 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "cha
   api_base <- api_base %||% getOption("openapi_api_base")
   api_key <- api_key %||% getOption("openapi_api_key")
   organization <- organization %||% getOption("openapi_organization")
-  api_type <- api_type %||% getOption("openapi_api_type")
+  api_type <- api_type %||% getOption("openapi_api_type") %||% "open_ai"
   api_version <- api_version %||% getOption("openapi_api_version")
   azure_deployment <- azure_deployment %||% getOption("openapi_azure_deployment")
 
@@ -139,7 +139,7 @@ making_requests <- function(method = c("POST", "GET", "DELETE"), endpoint = "cha
     result <- try_get(curlPerform(
       url = url, postfields = toJSON(data, auto_unbox = TRUE, digits = 22),
       httpheader = as.list(headers$headers), .encoding = "UTF-8",
-      writefunction = stream_fun
+      writefunction = stream_fun, .opts = list(ssl.verifypeer = FALSE)
     ), max_tries = max_tries)
     if (result != 0) {
       stop("Error occurred while executing CURL request.")
