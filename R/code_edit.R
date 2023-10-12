@@ -39,15 +39,14 @@ compare_text <- function(text1, text2) {
 #'
 #' @export
 #'
-code_edit <- function(code, prompt, instruction, explain = TRUE, simplify = TRUE, ...) {
+code_edit <- function(code, prompt, instruction, explain = FALSE, ...) {
   if (isTRUE(explain)) {
     instruction <- paste0(instruction, " The output should be in standard R code format with the explanation.")
   } else {
     instruction <- paste0(instruction, " Do not write explanations.")
   }
-  if (isTRUE(simplify)) {
-    instruction <- paste0(instruction, " Do not provide me with any R code that does not require modification.")
-  }
+  instruction <- paste0(instruction, " Do not provide me with any R code that does not require modification.")
+
   messages <- list(
     list(
       "role" = "system",
@@ -72,13 +71,14 @@ code_edit <- function(code, prompt, instruction, explain = TRUE, simplify = TRUE
 #' @return A \code{\link{TextEditing}} object
 #'
 #' @export
-code_document <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
+code_document <- function(code, additional_instructions = NULL, explain = FALSE, ...) {
+  prompts <- openapi::prompts
   prompt <- prompts[prompts[["act"]] == "R Package Development Assistant", "prompt"]
   instruction <- paste0(
     "Generate complete roxygen2 documentation for R code, including title, description, parameters, returns, examples, and more.",
     additional_instructions
   )
-  result <- code_edit(code = code, prompt = prompt, instruction = instruction, explain = explain, simplify = simplify, ...)
+  result <- code_edit(code = code, prompt = prompt, instruction = instruction, explain = explain, ...)
   return(result)
 }
 
@@ -91,13 +91,14 @@ code_document <- function(code, additional_instructions = NULL, explain = TRUE, 
 #' @return A \code{\link{TextEditing}} object
 #'
 #' @export
-code_check <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
+code_check <- function(code, additional_instructions = NULL, explain = FALSE, ...) {
+  prompts <- openapi::prompts
   prompt <- prompts[prompts[["act"]] == "R Package Development Assistant", "prompt"]
   instruction <- paste0(
     "Check if there are any issues or bugs with the following R code.",
     additional_instructions
   )
-  result <- code_edit(code = code, prompt = prompt, instruction = instruction, explain = explain, simplify = simplify, ...)
+  result <- code_edit(code = code, prompt = prompt, instruction = instruction, explain = explain, ...)
   return(result)
 }
 
@@ -110,13 +111,14 @@ code_check <- function(code, additional_instructions = NULL, explain = TRUE, sim
 #' @return A \code{\link{TextEditing}} object
 #'
 #' @export
-code_improve <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
+code_improve <- function(code, additional_instructions = NULL, explain = FALSE, ...) {
+  prompts <- openapi::prompts
   prompt <- prompts[prompts[["act"]] == "R Package Development Assistant", "prompt"]
   instruction <- paste0(
     "Rewrite the following R code to improve its efficiency.",
     additional_instructions
   )
-  result <- code_edit(code = code, prompt = prompt, instruction = instruction, explain = explain, simplify = simplify, ...)
+  result <- code_edit(code = code, prompt = prompt, instruction = instruction, explain = explain, ...)
   return(result)
 }
 
@@ -127,13 +129,14 @@ code_improve <- function(code, additional_instructions = NULL, explain = TRUE, s
 #' @return A \code{\link{TextEditing}} object
 #'
 #' @export
-code_comment <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
+code_comment <- function(code, additional_instructions = NULL, explain = TRUE, ...) {
+  prompts <- openapi::prompts
   prompt <- prompts[prompts[["act"]] == "R Package Development Assistant", "prompt"]
   instruction <- paste0(
     "Add inline comments to the following R code to improve its readability.",
     additional_instructions
   )
-  result <- code_edit(code = code, prompt = prompt, instruction = instruction, explain = explain, simplify = simplify, ...)
+  result <- code_edit(code = code, prompt = prompt, instruction = instruction, explain = explain, ...)
   return(result)
 }
 
@@ -146,13 +149,14 @@ code_comment <- function(code, additional_instructions = NULL, explain = TRUE, s
 #' @return A \code{\link{TextEditing}} object
 #'
 #' @export
-code_refactor <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
+code_refactor <- function(code, additional_instructions = NULL, explain = FALSE, ...) {
+  prompts <- openapi::prompts
   prompt <- prompts[prompts[["act"]] == "R Package Development Assistant", "prompt"]
   instruction <- paste0(
     "Review the following R code and refactor it to improve its efficiency and readability.",
     additional_instructions
   )
-  result <- code_edit(code = code, prompt = prompt, instruction = instruction, explain = explain, simplify = simplify, ...)
+  result <- code_edit(code = code, prompt = prompt, instruction = instruction, explain = explain, ...)
   return(result)
 }
 
@@ -165,13 +169,14 @@ code_refactor <- function(code, additional_instructions = NULL, explain = TRUE, 
 #' @return A \code{\link{TextEditing}} object
 #'
 #' @export
-code_explain <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
+code_explain <- function(code, additional_instructions = NULL, explain = FALSE, ...) {
+  prompts <- openapi::prompts
   prompt <- prompts[prompts[["act"]] == "R Package Development Assistant", "prompt"]
   instruction <- paste0(
     "Review the following R code and provide an explanation of how it works.",
     additional_instructions
   )
-  result <- code_edit(code = code, prompt = prompt, instruction = instruction, explain = explain, simplify = simplify, ...)
+  result <- code_edit(code = code, prompt = prompt, instruction = instruction, explain = explain, ...)
   return(result)
 }
 
@@ -184,12 +189,13 @@ code_explain <- function(code, additional_instructions = NULL, explain = TRUE, s
 #' @return A \code{\link{TextEditing}} object
 #'
 #' @export
-code_create_test <- function(code, additional_instructions = NULL, explain = TRUE, simplify = TRUE, ...) {
+code_create_test <- function(code, additional_instructions = NULL, explain = FALSE, ...) {
+  prompts <- openapi::prompts
   prompt <- prompts[prompts[["act"]] == "R Package Development Assistant", "prompt"]
   instruction <- paste0(
     "Generate test units for the following R code using the testthat 3e package.",
     additional_instructions
   )
-  result <- code_edit(code = code, prompt = prompt, instruction = instruction, explain = explain, simplify = simplify, ...)
+  result <- code_edit(code = code, prompt = prompt, instruction = instruction, explain = explain, ...)
   return(result)
 }

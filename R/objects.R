@@ -246,6 +246,7 @@ ChatGPT <- R6Class(
     chat_params = NULL,
     initialize = function(act_as = NULL, messages = NULL, chat_params = list()) {
       if (!is.null(act_as)) {
+        prompts <- openapi::prompts
         matched <- agrep(pattern = act_as, x = prompts[["act"]], max.distance = 0.1, ignore.case = TRUE)
         if (length(matched) > 0) {
           message("ChatGPT will act as a ", prompts[["act"]][matched[1]])
@@ -558,6 +559,7 @@ ChatPDF <- R6Class(
     chat_params = NULL,
     initialize = function(pdf) {
       if (!is.null(act_as)) {
+        prompts <- openapi::prompts
         matched <- agrep(pattern = act_as, x = prompts[["act"]], max.distance = 0.1, ignore.case = TRUE)
         if (length(matched) > 0) {
           message("ChatGPT will act as a ", prompts[["act"]][matched[1]])
